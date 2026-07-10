@@ -20,9 +20,7 @@ export default async function handler(req, res) {
     });
 
     const data = await response.json();
-    
     if (!data.choices) throw new Error('Error en API de Groq');
-
     return res.status(200).json({ content: data.choices[0].message.content });
   } catch (error) {
     return res.status(500).json({ content: "Error procesando tu petición: " + error.message });
