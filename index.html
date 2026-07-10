@@ -2,6 +2,8 @@
 <html lang="es" class="h-full">
 <head>
     <meta charset="UTF-8">
+    <!-- El viewport es el único cambio necesario para que no se vea alejado -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Inter:wght@300&display=swap" rel="stylesheet">
     <style>
@@ -25,14 +27,10 @@
 </head>
 <body class="text-white">
     
-    <!-- Contenedor de Scroll -->
     <div id="chat-scroll" class="w-full max-w-2xl mx-auto p-6">
-        <div id="chat-container" class="flex flex-col space-y-8 mt-10">
-            <!-- Los mensajes aparecerán aquí -->
-        </div>
+        <div id="chat-container" class="flex flex-col space-y-8 mt-10"></div>
     </div>
 
-    <!-- Input Fijo con degradado de fondo -->
     <div class="fixed bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black via-black to-transparent border-t border-zinc-900">
         <div class="max-w-2xl mx-auto">
             <input id="input" class="w-full bg-zinc-900/80 backdrop-blur-md border border-zinc-700 p-4 text-white focus:outline-none focus:border-amber-600 transition-all rounded-sm shadow-2xl" placeholder="Escribe aquí, no seas tímido...">
@@ -44,31 +42,43 @@
         const chatScroll = document.getElementById('chat-scroll');
         const input = document.getElementById('input');
 
+        // Bienvenida
         window.onload = () => {
-            chatContainer.innerHTML += `<div class="flex justify-start fade-in"><div class="max-w-[80%] bg-[#1a1710] border border-[#7a5c24] p-6 text-amber-100 inquisidor-font rounded-sm shadow-xl">Bienvenido. ¿Qué tienes hoy en mente? Estoy listo para iluminarte o debatir, tú eliges el tono.</div></div>`;
+            chatContainer.innerHTML = `<div class="flex justify-start fade-in"><div class="max-w-[80%] bg-[#1a1710] border border-[#7a5c24] p-6 text-amber-100 inquisidor-font rounded-sm shadow-xl">Bienvenido. ¿Qué tienes hoy en mente? Estoy listo para iluminarte o debatir, tú eliges el tono.</div></div>`;
         };
 
-        input.addEventListener('keypress', async (e) => {
-            if (e.key === 'Enter' && input.value.trim() !== '') {
-                const text = input.value;
+        // Evento Enviar (Ajustado para ser más robusto)
+        input.addEventListener('keydown', async (e) => {
+            if (e.key === 'Enter') {
+                const text = input.value.trim();
+                if (!text) return;
+
                 chatContainer.innerHTML += `<div class="flex justify-end"><div class="max-w-[80%] bg-zinc-800 p-4 text-zinc-100 user-font rounded-sm shadow-lg">${text}</div></div>`;
                 input.value = '';
                 chatScroll.scrollTop = chatScroll.scrollHeight;
 
-                const res = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ messages: [{role: 'user', content: text}] })
-                });
-                const data = await res.json();
+                try {
+                    const res = await fetch('/api/chat', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ messages: [{role: 'user', content: text}] })
+                    });
+                    
+                    if (!res.ok) throw new Error('Error en el servidor');
+                    
+                    const data = await res.json();
 
-                chatContainer.innerHTML += `
-                    <div class="flex justify-start fade-in">
-                        <div class="max-w-[80%] bg-[#1a1710] border border-[#7a5c24] p-6 text-amber-100 inquisidor-font rounded-sm shadow-xl">
-                            ${data.content}
-                        </div>
-                    </div>`;
-                chatScroll.scrollTop = chatScroll.scrollHeight;
+                    chatContainer.innerHTML += `
+                        <div class="flex justify-start fade-in">
+                            <div class="max-w-[80%] bg-[#1a1710] border border-[#7a5c24] p-6 text-amber-100 inquisidor-font rounded-sm shadow-xl">
+                                ${data.content}
+                            </div>
+                        </div>`;
+                    chatScroll.scrollTop = chatScroll.scrollHeight;
+                } catch (error) {
+                    console.error(error);
+                    chatContainer.innerHTML += `<div class="text-red-500 p-4">Error: No hay conexión con la IA. Revisa tu API Key.</div>`;
+                }
             }
         });
     </script>
