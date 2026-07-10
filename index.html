@@ -26,52 +26,60 @@
         </div>
     </div>
 
+    <!-- Barra de input y botón -->
     <div class="fixed bottom-0 left-0 w-full p-4 bg-black border-t border-zinc-900">
-        <div class="max-w-2xl mx-auto">
-            <input id="input" type="text" class="w-full bg-zinc-900 p-4 text-white border border-zinc-700 rounded focus:outline-none" placeholder="Escribe aquí...">
+        <div class="max-w-2xl mx-auto flex gap-2">
+            <input id="input" type="text" class="flex-1 bg-zinc-900 p-4 text-white border border-zinc-700 rounded focus:outline-none" placeholder="Escribe aquí...">
+            <button id="send-btn" class="bg-amber-700 hover:bg-amber-600 text-white px-6 py-4 rounded font-bold transition">
+                Enviar
+            </button>
         </div>
     </div>
 
     <script>
-        // Registrar Service Worker
+        // Registrar Service Worker para PWA
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js');
         }
 
         const container = document.getElementById('chat-container');
         const input = document.getElementById('input');
+        const sendBtn = document.getElementById('send-btn');
         const scroll = document.getElementById('chat-scroll');
 
         window.onload = () => {
             container.innerHTML += `<div class="p-6 bg-[#1a1710] border-l-4 border-amber-600">Bienvenido. ¿Qué tienes hoy en mente? Estoy listo para iluminarte.</div>`;
         };
 
-        input.addEventListener('keydown', async (e) => {
-            if (e.key === 'Enter') {
-                const text = input.value.trim();
-                if (!text) return;
+        // Función unificada de envío
+        async function enviarMensaje() {
+            const text = input.value.trim();
+            if (!text) return;
+            
+            container.innerHTML += `<div class="text-right text-gray-400 p-4">${text}</div>`;
+            input.value = '';
+            scroll.scrollTop = scroll.scrollHeight;
+
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ messages: [{role: 'user', content: text}] })
+                });
+                const data = await res.json();
                 
-                container.innerHTML += `<div class="text-right text-gray-400 p-4">${text}</div>`;
-                input.value = '';
+                if (data.error) throw new Error(data.error);
+
+                container.innerHTML += `<div class="p-6 bg-[#1a1710] border-l-4 border-amber-600">${data.content}</div>`;
                 scroll.scrollTop = scroll.scrollHeight;
-
-                try {
-                    const res = await fetch('/api/chat', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ messages: [{role: 'user', content: text}] })
-                    });
-                    const data = await res.json();
-                    
-                    if (data.error) throw new Error(data.error);
-
-                    container.innerHTML += `<div class="p-6 bg-[#1a1710] border-l-4 border-amber-600">${data.content}</div>`;
-                    scroll.scrollTop = scroll.scrollHeight;
-                } catch (err) {
-                    container.innerHTML += `<div class="p-4 bg-red-900">Error: ${err.message}</div>`;
-                }
+            } catch (err) {
+                container.innerHTML += `<div class="p-4 bg-red-900">Error: ${err.message}</div>`;
             }
-        });
+        }
+
+        // Eventos
+        sendBtn.addEventListener('click', enviarMensaje);
+        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') enviarMensaje(); });
     </script>
 </body>
 </html>
