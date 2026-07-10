@@ -1,5 +1,4 @@
 export default async function handler(req, res) {
-  // Aseguramos que solo aceptamos POST
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método no permitido' });
   }
@@ -7,7 +6,6 @@ export default async function handler(req, res) {
   try {
     const { messages } = req.body;
     
-    // Verificación básica de que la variable existe
     if (!process.env.GROQ_API_KEY) {
       throw new Error("API Key no configurada en Vercel.");
     }
@@ -19,8 +17,8 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'llama3-8b-8192',
-        messages: [{ role: 'system', content: "Eres el Inquisidor, brutalmente honesto y dominante." }, ...messages]
+        model: 'llama-3.3-70b-versatile', 
+        messages: [{ role: 'system', content: "Eres el Inquisidor, brutalmente honesto y dominante. Tu misión es desafiar las ideas del usuario." }, ...messages]
       })
     });
 
