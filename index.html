@@ -4,82 +4,94 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>El Inquisidor</title>
-
-    <!-- Configuración PWA -->
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="https://i.imgur.com/rYqz9No.jpeg">
-    <meta name="theme-color" content="#000000">
-
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Inter:wght@300&display=swap" rel="stylesheet">
-    
     <style>
-        body { background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%); height: 100vh; display: flex; flex-direction: column; margin: 0; }
-        #chat-scroll { flex: 1; overflow-y: auto; padding-bottom: 150px; }
+        body { background: #000; height: 100vh; display: flex; }
+        #chat-area { flex: 1; display: flex; flex-direction: column; height: 100vh; }
+        #chat-scroll { flex: 1; overflow-y: auto; padding-bottom: 100px; }
     </style>
 </head>
 <body class="text-white">
 
-    <div id="chat-scroll">
-        <div id="chat-container" class="w-full max-w-2xl mx-auto p-4 md:p-6 flex flex-col space-y-8 mt-10">
-            <!-- Los mensajes aparecen aquí -->
-        </div>
+    <!-- Sidebar -->
+    <div id="sidebar" class="w-64 bg-zinc-950 border-r border-zinc-800 p-4 flex flex-col">
+        <button onclick="nuevaSesion()" class="bg-amber-700 p-3 rounded mb-6 font-bold">+ Nueva Sesión</button>
+        <div id="lista-sesiones" class="flex-1 overflow-y-auto space-y-2"></div>
     </div>
 
-    <!-- Barra de input y botón -->
-    <div class="fixed bottom-0 left-0 w-full p-4 bg-black border-t border-zinc-900">
-        <div class="max-w-2xl mx-auto flex gap-2">
-            <input id="input" type="text" class="flex-1 bg-zinc-900 p-4 text-white border border-zinc-700 rounded focus:outline-none" placeholder="Escribe aquí...">
-            <button id="send-btn" class="bg-amber-700 hover:bg-amber-600 text-white px-6 py-4 rounded font-bold transition">
-                Enviar
-            </button>
+    <!-- Chat Area -->
+    <div id="chat-area">
+        <div id="chat-scroll"><div id="chat-container" class="max-w-2xl mx-auto p-6 space-y-6"></div></div>
+        <div class="p-4 border-t border-zinc-900">
+            <div class="max-w-2xl mx-auto flex gap-2">
+                <input id="input" class="flex-1 bg-zinc-900 p-4 rounded" placeholder="Escribe al Inquisidor...">
+                <button id="send-btn" class="bg-amber-700 px-6 rounded font-bold">Enviar</button>
+            </div>
         </div>
     </div>
 
     <script>
-        // Registrar Service Worker para PWA
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js');
+        let sesiones = JSON.parse(localStorage.getItem('inquisidor_sesiones')) || [{ id: Date.now(), titulo: "Nueva Charla", mensajes: [] }];
+        let actualId = sesiones[0].id;
+
+        function guardar() { localStorage.setItem('inquisidor_sesiones', JSON.stringify(sesiones)); renderSidebar(); }
+
+        function renderSidebar() {
+            const list = document.getElementById('lista-sesiones');
+            list.innerHTML = sesiones.map(s => `
+                <div class="p-3 cursor-pointer rounded ${s.id === actualId ? 'bg-zinc-800' : 'hover:bg-zinc-900'}" onclick="cambiarSesion(${s.id})">
+                    ${s.titulo}
+                </div>
+            `).join('');
         }
 
-        const container = document.getElementById('chat-container');
-        const input = document.getElementById('input');
-        const sendBtn = document.getElementById('send-btn');
-        const scroll = document.getElementById('chat-scroll');
+        function cambiarSesion(id) { actualId = id; renderChat(); renderSidebar(); }
 
-        window.onload = () => {
-            container.innerHTML += `<div class="p-6 bg-[#1a1710] border-l-4 border-amber-600">Bienvenido. ¿Qué tienes hoy en mente? Estoy listo para iluminarte.</div>`;
-        };
+        function nuevaSesion() {
+            const nueva = { id: Date.now(), titulo: "Nueva Charla", mensajes: [] };
+            sesiones.unshift(nueva);
+            actualId = nueva.id;
+            guardar();
+            renderChat();
+        }
 
-        // Función unificada de envío
-        async function enviarMensaje() {
+        function renderChat() {
+            const s = sesiones.find(x => x.id === actualId);
+            document.getElementById('chat-container').innerHTML = s.mensajes.map(m => 
+                `<div class="${m.role === 'user' ? 'text-right' : 'bg-[#1a1710] border-l-4 border-amber-600'} p-4">${m.content}</div>`
+            ).join('');
+        }
+
+        async function enviar() {
+            const input = document.getElementById('input');
             const text = input.value.trim();
             if (!text) return;
-            
-            container.innerHTML += `<div class="text-right text-gray-400 p-4">${text}</div>`;
+
+            let s = sesiones.find(x => x.id === actualId);
+            s.mensajes.push({ role: 'user', content: text });
             input.value = '';
-            scroll.scrollTop = scroll.scrollHeight;
+            
+            // Si es el primer mensaje, cambiar título
+            if (s.mensajes.length === 1) s.titulo = text.substring(0, 20);
 
-            try {
-                const res = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ messages: [{role: 'user', content: text}] })
-                });
-                const data = await res.json();
-                
-                if (data.error) throw new Error(data.error);
-
-                container.innerHTML += `<div class="p-6 bg-[#1a1710] border-l-4 border-amber-600">${data.content}</div>`;
-                scroll.scrollTop = scroll.scrollHeight;
-            } catch (err) {
-                container.innerHTML += `<div class="p-4 bg-red-900">Error: ${err.message}</div>`;
-            }
+            renderChat();
+            
+            const res = await fetch('/api/chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ messages: s.mensajes })
+            });
+            const data = await res.json();
+            s.mensajes.push({ role: 'assistant', content: data.content });
+            guardar();
+            renderChat();
         }
 
-        // Eventos
-        sendBtn.addEventListener('click', enviarMensaje);
-        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') enviarMensaje(); });
+        document.getElementById('send-btn').onclick = enviar;
+        renderSidebar();
+        renderChat();
     </script>
 </body>
 </html>
