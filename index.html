@@ -1,22 +1,31 @@
 <!DOCTYPE html>
-<html lang="es" class="bg-black text-white">
+<html lang="es" class="bg-black">
 <head>
     <meta charset="UTF-8">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,600&family=Inter:wght@300;400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Inter:wght@300&display=swap" rel="stylesheet">
     <style>
+        /* Fondo con puntos elegantes */
+        .bg-dots {
+            background-image: radial-gradient(#2d2d2d 0.5px, transparent 0.5px);
+            background-size: 20px 20px;
+        }
         .inquisidor-font { font-family: 'Playfair Display', serif; }
         .user-font { font-family: 'Inter', sans-serif; }
+        
+        /* Animación suave */
+        .fade-in { animation: fadeIn 0.8s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center p-6">
+<body class="min-h-screen flex flex-col items-center p-6 bg-dots">
     
-    <div id="chat-container" class="w-full max-w-2xl flex flex-col space-y-6">
+    <div id="chat-container" class="w-full max-w-2xl flex flex-col space-y-8 mt-10">
         <!-- Los mensajes aparecerán aquí -->
     </div>
 
-    <div class="fixed bottom-0 w-full max-w-2xl p-6">
-        <input id="input" class="w-full bg-zinc-900 border border-zinc-700 p-4 text-white focus:outline-none focus:border-amber-600 transition-all" placeholder="Escribe algo interesante...">
+    <div class="fixed bottom-0 w-full max-w-2xl p-6 bg-black/80 backdrop-blur-md">
+        <input id="input" class="w-full bg-zinc-950 border border-zinc-700 p-4 text-white focus:outline-none focus:border-amber-700 transition-all shadow-xl" placeholder="Escribe algo interesante...">
     </div>
 
     <script>
@@ -24,13 +33,11 @@
         const input = document.getElementById('input');
 
         input.addEventListener('keypress', async (e) => {
-            if (e.key === 'Enter') {
+            if (e.key === 'Enter' && input.value.trim() !== '') {
                 const text = input.value;
-                // Mostrar mensaje usuario
-                chatContainer.innerHTML += `<div class="flex justify-end"><div class="max-w-[80%] bg-zinc-950 border border-zinc-800 p-4 text-zinc-400 user-font rounded-sm">${text}</div></div>`;
+                chatContainer.innerHTML += `<div class="flex justify-end"><div class="max-w-[80%] bg-zinc-950 border border-zinc-800 p-4 text-zinc-400 user-font rounded-sm shadow-lg">${text}</div></div>`;
                 input.value = '';
 
-                // Llamada a tu API
                 const res = await fetch('/api/chat', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -38,8 +45,14 @@
                 });
                 const data = await res.json();
 
-                // Mostrar respuesta Inquisidor
-                chatContainer.innerHTML += `<div class="flex justify-start"><div class="max-w-[80%] bg-zinc-900 border border-amber-900/50 p-6 text-amber-50 inquisidor-font italic rounded-sm shadow-2xl">${data.content}</div></div>`;
+                // Respuesta con color Oro Oscuro y Animación
+                chatContainer.innerHTML += `
+                    <div class="flex justify-start fade-in">
+                        <div class="max-w-[80%] bg-[#1a1710] border border-[#7a5c24] p-6 text-amber-100 inquisidor-font rounded-sm shadow-[0_0_20px_rgba(122,92,36,0.2)]">
+                            ${data.content}
+                        </div>
+                    </div>`;
+                window.scrollTo(0, document.body.scrollHeight);
             }
         });
     </script>
