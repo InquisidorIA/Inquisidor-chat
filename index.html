@@ -9,7 +9,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background: #000; height: 100vh; display: flex; overflow: hidden; }
-        #sidebar { position: fixed; left: -256px; top: 0; bottom: 0; z-index: 50; transition: left 0.3s; }
+        #sidebar { position: fixed; left: -256px; top: 0; bottom: 0; z-index: 50; transition: left 0.3s; background: #09090b; }
         #sidebar.open { left: 0; }
         #chat-area { flex: 1; display: flex; flex-direction: column; height: 100vh; width: 100%; }
         @media (min-width: 768px) { #sidebar { position: relative; left: 0; } }
@@ -19,8 +19,8 @@
 
     <button onclick="document.getElementById('sidebar').classList.toggle('open')" class="md:hidden fixed top-4 left-4 z-50 p-2 bg-zinc-800 rounded">☰</button>
 
-    <div id="sidebar" class="w-64 bg-zinc-950 border-r border-zinc-800 p-4 flex flex-col">
-        <button onclick="nuevaSesion(); document.getElementById('sidebar').classList.toggle('open')" class="bg-amber-700 hover:bg-amber-600 w-full p-3 rounded mb-6 font-bold">+ Nueva Sesión</button>
+    <div id="sidebar" class="w-64 border-r border-zinc-800 p-4 flex flex-col">
+        <button onclick="nuevaSesion()" class="bg-amber-700 hover:bg-amber-600 w-full p-3 rounded mb-6 font-bold">+ Nueva Sesión</button>
         <div id="lista-sesiones" class="flex-1 overflow-y-auto space-y-2"></div>
     </div>
 
@@ -45,7 +45,7 @@
         function renderSidebar() {
             const list = document.getElementById('lista-sesiones');
             list.innerHTML = sesiones.map(s => `
-                <div class="p-3 cursor-pointer rounded text-sm truncate ${s.id === actualId ? 'bg-zinc-800 border-l-2 border-amber-600' : 'hover:bg-zinc-900'}" onclick="cambiarSesion(${s.id}); document.getElementById('sidebar').classList.remove('open');">
+                <div class="p-3 cursor-pointer rounded text-sm truncate ${s.id === actualId ? 'bg-zinc-800 border-l-2 border-amber-600' : 'hover:bg-zinc-900'}" onclick="cambiarSesion(${s.id})">
                     ${s.titulo}
                 </div>
             `).join('');
