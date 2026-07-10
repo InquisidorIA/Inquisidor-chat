@@ -5,25 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>El Inquisidor</title>
     <link rel="manifest" href="/manifest.json">
-    <link rel="apple-touch-icon" href="https://i.imgur.com/rYqz9No.jpeg">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background: #000; height: 100vh; display: flex; overflow: hidden; }
-        #sidebar { position: fixed; left: -256px; top: 0; bottom: 0; z-index: 50; transition: left 0.3s; background: #09090b; }
+        #sidebar { position: fixed; left: -256px; top: 0; bottom: 0; z-index: 50; transition: left 0.3s; background: #09090b; width: 256px; }
         #sidebar.open { left: 0; }
         #chat-area { flex: 1; display: flex; flex-direction: column; height: 100vh; width: 100%; }
+        #overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; display: none; }
+        #overlay.open { display: block; }
         @media (min-width: 768px) { #sidebar { position: relative; left: 0; } }
     </style>
 </head>
 <body class="text-white">
 
-    <button onclick="document.getElementById('sidebar').classList.toggle('open')" class="md:hidden fixed top-4 left-4 z-50 p-2 bg-zinc-800 rounded">☰</button>
+    <!-- Overlay móvil -->
+    <div id="overlay" onclick="toggleSidebar()"></div>
 
-    <div id="sidebar" class="w-64 border-r border-zinc-800 p-4 flex flex-col">
-        <button onclick="nuevaSesion()" class="bg-amber-700 hover:bg-amber-600 w-full p-3 rounded mb-6 font-bold">+ Nueva Sesión</button>
+    <!-- Botón Hamburguesa -->
+    <button onclick="toggleSidebar()" class="md:hidden fixed top-4 left-4 z-50 p-2 bg-zinc-800 rounded">☰</button>
+
+    <!-- Sidebar -->
+    <div id="sidebar" class="border-r border-zinc-800 p-4 flex flex-col">
+        <button onclick="nuevaSesion()" class="bg-amber-700 hover:bg-amber-600 w-full p-3 rounded mb-6 font-bold transition">+ Nueva Sesión</button>
         <div id="lista-sesiones" class="flex-1 overflow-y-auto space-y-2"></div>
     </div>
 
+    <!-- Chat Area -->
     <div id="chat-area">
         <div id="chat-scroll" class="flex-1 overflow-y-auto pt-16">
             <div id="chat-container" class="max-w-2xl mx-auto p-6 space-y-6"></div>
@@ -40,24 +47,44 @@
         let sesiones = JSON.parse(localStorage.getItem('inquisidor_sesiones')) || [{ id: Date.now(), titulo: "Nueva Charla", mensajes: [] }];
         let actualId = sesiones[0].id;
 
+        function toggleSidebar() { 
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('overlay').classList.toggle('open');
+        }
+
         function guardar() { localStorage.setItem('inquisidor_sesiones', JSON.stringify(sesiones)); renderSidebar(); renderChat(); }
 
         function renderSidebar() {
             const list = document.getElementById('lista-sesiones');
             list.innerHTML = sesiones.map(s => `
-                <div class="p-3 cursor-pointer rounded text-sm truncate ${s.id === actualId ? 'bg-zinc-800 border-l-2 border-amber-600' : 'hover:bg-zinc-900'}" onclick="cambiarSesion(${s.id})">
-                    ${s.titulo}
+                <div class="group flex items-center justify-between p-3 cursor-pointer rounded text-sm ${s.id === actualId ? 'bg-zinc-800 border-l-2 border-amber-600' : 'hover:bg-zinc-900'}">
+                    <span onclick="cambiarSesion(${s.id})" class="truncate flex-1">${s.titulo}</span>
+                    <button onclick="borrarSesion(${s.id})" class="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-400">✕</button>
                 </div>
             `).join('');
         }
 
-        function cambiarSesion(id) { actualId = id; renderChat(); renderSidebar(); }
+        function borrarSesion(id) {
+            event.stopPropagation();
+            if(sesiones.length <= 1) { alert("Necesitas al menos una sesión."); return; }
+            sesiones = sesiones.filter(s => s.id !== id);
+            actualId = sesiones[0].id;
+            guardar();
+        }
+
+        function cambiarSesion(id) { 
+            actualId = id; 
+            renderChat(); 
+            renderSidebar(); 
+            if(window.innerWidth < 768) toggleSidebar(); 
+        }
 
         function nuevaSesion() {
             const nueva = { id: Date.now(), titulo: "Nueva Charla", mensajes: [] };
             sesiones.unshift(nueva);
             actualId = nueva.id;
             guardar();
+            if(window.innerWidth < 768) toggleSidebar();
         }
 
         function renderChat() {
@@ -77,7 +104,7 @@
             if (!text) return;
             let s = sesiones.find(x => x.id === actualId);
             s.mensajes.push({ role: 'user', content: text });
-            if (s.mensajes.length === 1) s.titulo = text.substring(0, 25);
+            if (s.mensajes.length === 1) s.titulo = text.substring(0, 20);
             input.value = '';
             renderChat();
             const res = await fetch('/api/chat', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ messages: s.mensajes }) });
