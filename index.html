@@ -9,25 +9,27 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background: #000; height: 100vh; display: flex; }
-        #chat-area { flex: 1; display: flex; flex-direction: column; height: 100vh; }
-        #chat-scroll { flex: 1; overflow-y: auto; padding-bottom: 100px; }
+        #chat-area { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        #chat-scroll { flex: 1; overflow-y: auto; padding-bottom: 20px; }
     </style>
 </head>
 <body class="text-white">
 
     <!-- Sidebar -->
     <div id="sidebar" class="w-64 bg-zinc-950 border-r border-zinc-800 p-4 flex flex-col">
-        <button onclick="nuevaSesion()" class="bg-amber-700 p-3 rounded mb-6 font-bold">+ Nueva Sesión</button>
+        <button onclick="nuevaSesion()" class="bg-amber-700 hover:bg-amber-600 w-full p-3 rounded mb-6 font-bold transition">+ Nueva Sesión</button>
         <div id="lista-sesiones" class="flex-1 overflow-y-auto space-y-2"></div>
     </div>
 
     <!-- Chat Area -->
     <div id="chat-area">
-        <div id="chat-scroll"><div id="chat-container" class="max-w-2xl mx-auto p-6 space-y-6"></div></div>
-        <div class="p-4 border-t border-zinc-900">
+        <div id="chat-scroll">
+            <div id="chat-container" class="max-w-2xl mx-auto p-6 space-y-6"></div>
+        </div>
+        <div class="p-4 border-t border-zinc-900 bg-black">
             <div class="max-w-2xl mx-auto flex gap-2">
-                <input id="input" class="flex-1 bg-zinc-900 p-4 rounded" placeholder="Escribe al Inquisidor...">
-                <button id="send-btn" class="bg-amber-700 px-6 rounded font-bold">Enviar</button>
+                <input id="input" class="flex-1 bg-zinc-900 p-4 rounded text-white border border-zinc-700 focus:outline-none" placeholder="Escribe al Inquisidor...">
+                <button id="send-btn" class="bg-amber-700 hover:bg-amber-600 px-6 rounded font-bold transition">Enviar</button>
             </div>
         </div>
     </div>
@@ -36,12 +38,12 @@
         let sesiones = JSON.parse(localStorage.getItem('inquisidor_sesiones')) || [{ id: Date.now(), titulo: "Nueva Charla", mensajes: [] }];
         let actualId = sesiones[0].id;
 
-        function guardar() { localStorage.setItem('inquisidor_sesiones', JSON.stringify(sesiones)); renderSidebar(); }
+        function guardar() { localStorage.setItem('inquisidor_sesiones', JSON.stringify(sesiones)); renderSidebar(); renderChat(); }
 
         function renderSidebar() {
             const list = document.getElementById('lista-sesiones');
             list.innerHTML = sesiones.map(s => `
-                <div class="p-3 cursor-pointer rounded ${s.id === actualId ? 'bg-zinc-800' : 'hover:bg-zinc-900'}" onclick="cambiarSesion(${s.id})">
+                <div class="p-3 cursor-pointer rounded text-sm truncate ${s.id === actualId ? 'bg-zinc-800 border-l-2 border-amber-600' : 'hover:bg-zinc-900'}" onclick="cambiarSesion(${s.id})">
                     ${s.titulo}
                 </div>
             `).join('');
@@ -54,14 +56,17 @@
             sesiones.unshift(nueva);
             actualId = nueva.id;
             guardar();
-            renderChat();
         }
 
         function renderChat() {
             const s = sesiones.find(x => x.id === actualId);
-            document.getElementById('chat-container').innerHTML = s.mensajes.map(m => 
-                `<div class="${m.role === 'user' ? 'text-right' : 'bg-[#1a1710] border-l-4 border-amber-600'} p-4">${m.content}</div>`
-            ).join('');
+            const container = document.getElementById('chat-container');
+            container.innerHTML = s.mensajes.map(m => `
+                <div class="${m.role === 'user' ? 'text-right' : 'bg-[#1a1710] border-l-4 border-amber-600 p-4'}">
+                    <div class="${m.role === 'user' ? 'inline-block p-4 bg-zinc-900 rounded' : ''}">${m.content}</div>
+                </div>
+            `).join('');
+            document.getElementById('chat-scroll').scrollTop = document.getElementById('chat-scroll').scrollHeight;
         }
 
         async function enviar() {
@@ -71,11 +76,8 @@
 
             let s = sesiones.find(x => x.id === actualId);
             s.mensajes.push({ role: 'user', content: text });
+            if (s.mensajes.length === 1) s.titulo = text.substring(0, 25);
             input.value = '';
-            
-            // Si es el primer mensaje, cambiar título
-            if (s.mensajes.length === 1) s.titulo = text.substring(0, 20);
-
             renderChat();
             
             const res = await fetch('/api/chat', {
@@ -86,12 +88,11 @@
             const data = await res.json();
             s.mensajes.push({ role: 'assistant', content: data.content });
             guardar();
-            renderChat();
         }
 
         document.getElementById('send-btn').onclick = enviar;
-        renderSidebar();
-        renderChat();
+        document.getElementById('input').onkeydown = (e) => { if(e.key === 'Enter') enviar(); };
+        renderSidebar(); renderChat();
     </script>
 </body>
 </html>
