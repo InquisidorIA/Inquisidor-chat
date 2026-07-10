@@ -4,62 +4,43 @@
     <meta charset="UTF-8">
     <title>EL INQUISIDOR</title>
     <style>
-        body { 
-            background-color: #000; 
-            color: #00ff41; 
-            font-family: 'Courier New', monospace; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            height: 100vh; 
-            margin: 0; 
-        }
-        #input-box { 
-            background: #111; 
-            border: 1px solid #00ff41; 
-            color: #00ff41; 
-            padding: 10px; 
-            width: 300px; 
-            margin-bottom: 10px; 
-        }
-        button { 
-            background: #00ff41; 
-            color: #000; 
-            border: none; 
-            padding: 10px 20px; 
-            cursor: pointer; 
-            font-weight: bold; 
-        }
-        #respuesta { 
-            margin-top: 20px; 
-            width: 80%; 
-            max-width: 600px; 
-            text-align: center; 
-        }
+        body { background-color: #000; color: #00ff41; font-family: 'Courier New', monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; padding: 20px; }
+        #input-box { background: #111; border: 1px solid #00ff41; color: #00ff41; padding: 10px; width: 300px; margin-bottom: 10px; }
+        button { background: #00ff41; color: #000; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; }
+        #respuesta { margin-top: 20px; width: 80%; max-width: 600px; text-align: center; white-space: pre-wrap; }
     </style>
 </head>
 <body>
     <h1>EL INQUISIDOR</h1>
-    <input type="text" id="input-box" placeholder="Propón tu idea aquí...">
+    <input type="text" id="input-box" placeholder="Habla...">
     <button onclick="enviar()">INTERROGAR</button>
     <div id="respuesta"></div>
 
     <script>
+        let historial = []; // Aquí guardaremos toda la charla
+
         async function enviar() {
             const input = document.getElementById('input-box').value;
-            document.getElementById('respuesta').innerText = "Procesando...";
+            if (!input) return;
+
+            // Guardar tu mensaje
+            historial.push({ role: 'user', content: input });
+            document.getElementById('respuesta').innerText = "Analizando...";
             
             try {
                 const res = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ messages: [{ role: 'user', content: input }] })
+                    body: JSON.stringify({ messages: historial }) // Enviamos TODO el historial
                 });
+                
                 const data = await res.json();
-                document.getElementById('respuesta').innerText = data.content || data.error;
+                
+                // Guardar respuesta del Inquisidor
+                historial.push({ role: 'assistant', content: data.content });
+                document.getElementById('respuesta').innerText = data.content;
             } catch (err) {
-                document.getElementById('respuesta').innerText = "Error de conexión: " + err.message;
+                document.getElementById('respuesta').innerText = "Error: " + err.message;
             }
         }
     </script>
