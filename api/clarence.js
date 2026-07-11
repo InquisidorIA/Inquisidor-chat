@@ -9,7 +9,6 @@ const SYSTEM_INSTRUCTIONS = {
 };
 
 export async function getClarenceResponse(messages, userId) {
-  // 1. Recuperar memoria de los últimos 3 días
   const threeDaysAgo = new Date();
   threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
 
@@ -20,11 +19,9 @@ export async function getClarenceResponse(messages, userId) {
     .gte('created_at', threeDaysAgo.toISOString())
     .order('created_at', { ascending: true });
 
-  // 2. Personalidad
   const { data: userState } = await supabase.from('users').select('personality').eq('id', userId).single();
   const personality = userState?.personality || 'SARCÁSTICO';
 
-  // 3. Prompt Maestro + Inyección de Memoria
   const historyContext = memory ? memory.map(m => `${m.role}: ${m.message}`).join('\n') : "";
   
   const masterPrompt = `
@@ -43,7 +40,7 @@ export async function getClarenceResponse(messages, userId) {
     headers: { 'Authorization': `Bearer ${process.env.GROQ_API_KEY}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'llama-3.3-70b-versatile',
-      messages: [{ role: 'system', content: masterPrompt }, ...messages.slice(-5)], // Limitamos tokens
+      messages: [{ role: 'system', content: masterPrompt }, ...messages.slice(-5)],
       temperature: 0.7
     })
   });
