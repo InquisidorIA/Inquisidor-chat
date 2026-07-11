@@ -32,7 +32,7 @@
         </div>
         <div class="p-4 border-t border-zinc-900 bg-black">
             <div class="max-w-2xl mx-auto flex gap-2">
-                <input id="input" class="flex-1 bg-zinc-900 p-4 rounded text-white border border-zinc-700 focus:outline-none" placeholder="¿Qué tenemos hoy, Andrés?">
+                <input id="input" class="flex-1 bg-zinc-900 p-4 rounded text-white border border-zinc-700 focus:outline-none" placeholder="¿Qué tenemos hoy en mente?">
                 <button id="send-btn" class="bg-amber-700 hover:bg-amber-600 px-6 rounded font-bold transition">Enviar</button>
             </div>
         </div>
@@ -42,9 +42,8 @@
         let sesiones = JSON.parse(localStorage.getItem('inquisidor_sesiones')) || [{ id: Date.now(), titulo: "Nueva Charla", mensajes: [] }];
         let actualId = sesiones[0].id;
 
-        // Saludo Inicial
         if (sesiones[0].mensajes.length === 0) {
-            sesiones[0].mensajes.push({ role: 'assistant', content: "¡Hola, Andrés! Aquí estoy de nuevo. Sé que a veces me pongo intenso, pero ya bajé el tono. Considérame ese amigo cínico que te quiere ver triunfar, aunque tenga que reírme un poco de tus ocurrencias. La vida es demasiado corta para ser un soso y demasiado seria para no tener un plan brillante. ¿Qué traes en mente hoy? Suéltalo." });
+            sesiones[0].mensajes.push({ role: 'assistant', content: "Aquí estoy de nuevo. Sé que a veces me pongo intenso, pero he bajado el tono. Considérame ese amigo cínico que te quiere ver triunfar, aunque tenga que reírme un poco de tus ocurrencias. La vida es demasiado corta para ser un soso y demasiado seria para no tener un plan brillante. ¿Qué traes en mente hoy? Suéltalo." });
         }
 
         function toggleSidebar() { 
@@ -66,7 +65,7 @@
 
         function borrarSesion(id) {
             event.stopPropagation();
-            if(sesiones.length <= 1) { alert("¡Eh! No puedes borrar la única charla que tenemos."); return; }
+            if(sesiones.length <= 1) { alert("No puedes borrar la única charla."); return; }
             sesiones = sesiones.filter(s => s.id !== id);
             actualId = sesiones[0].id;
             guardar();
@@ -80,7 +79,7 @@
         }
 
         function nuevaSesion() {
-            const nueva = { id: Date.now(), titulo: "Nueva Charla", mensajes: [{ role: 'assistant', content: "Nueva hoja en blanco. ¿Qué vamos a desmenuzar hoy?" }] };
+            const nueva = { id: Date.now(), titulo: "Nueva Charla", mensajes: [{ role: 'assistant', content: "Hoja en blanco. ¿Qué vamos a desmenuzar hoy?" }] };
             sesiones.unshift(nueva);
             actualId = nueva.id;
             guardar();
