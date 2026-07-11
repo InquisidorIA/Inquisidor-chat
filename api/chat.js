@@ -10,14 +10,11 @@ export default async function handler(req, res) {
   const userMessage = messages[messages.length - 1].content;
 
   try {
-    // Guardar input del usuario
     await supabase.from('chat_memory').insert({ user_id: userId, message: userMessage, role: 'user' });
 
-    // Obtener respuesta
     const result = await getClarenceResponse(messages, userId);
     const aiMessage = result.choices[0].message.content;
 
-    // Guardar respuesta de Clarence
     await supabase.from('chat_memory').insert({ user_id: userId, message: aiMessage, role: 'assistant' });
 
     return res.status(200).json({ content: aiMessage });
