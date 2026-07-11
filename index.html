@@ -2,119 +2,54 @@
 <html lang="es" class="h-full">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>El Inquisidor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clarence</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { background: #000; height: 100vh; display: flex; overflow: hidden; }
-        #sidebar { position: fixed; left: -256px; top: 0; bottom: 0; z-index: 50; transition: left 0.3s; background: #09090b; width: 256px; }
-        #sidebar.open { left: 0; }
-        #chat-area { flex: 1; display: flex; flex-direction: column; height: 100vh; width: 100%; }
-        #overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; display: none; }
-        #overlay.open { display: block; }
-        @media (min-width: 768px) { #sidebar { position: relative; left: 0; } }
-    </style>
 </head>
-<body class="text-white">
-
-    <div id="overlay" onclick="toggleSidebar()"></div>
-
-    <button onclick="toggleSidebar()" class="md:hidden fixed top-4 left-4 z-50 p-2 bg-zinc-800 rounded">☰</button>
-
-    <div id="sidebar" class="border-r border-zinc-800 p-4 flex flex-col">
-        <button onclick="nuevaSesion()" class="bg-amber-700 hover:bg-amber-600 w-full p-3 rounded mb-6 font-bold transition">+ Nueva Sesión</button>
-        <div id="lista-sesiones" class="flex-1 overflow-y-auto space-y-2"></div>
-    </div>
-
-    <div id="chat-area">
-        <div id="chat-scroll" class="flex-1 overflow-y-auto pt-16">
-            <div id="chat-container" class="max-w-2xl mx-auto p-6 space-y-6"></div>
-        </div>
-        <div class="p-4 border-t border-zinc-900 bg-black">
-            <div class="max-w-2xl mx-auto flex gap-2">
-                <input id="input" class="flex-1 bg-zinc-900 p-4 rounded text-white border border-zinc-700 focus:outline-none" placeholder="¿Qué tenemos hoy en mente?">
-                <button id="send-btn" class="bg-amber-700 hover:bg-amber-600 px-6 rounded font-bold transition">Enviar</button>
-            </div>
+<body class="bg-black text-white h-screen flex flex-col">
+    <div id="chat-container" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
+    <div class="p-4 border-t border-zinc-900">
+        <div class="max-w-2xl mx-auto flex gap-2">
+            <input id="input" class="flex-1 bg-zinc-900 p-4 rounded border border-zinc-700" placeholder="¿Qué tenemos hoy en mente?">
+            <button id="send-btn" class="bg-amber-700 p-4 rounded font-bold">Enviar</button>
         </div>
     </div>
 
     <script>
-        let sesiones = JSON.parse(localStorage.getItem('inquisidor_sesiones')) || [{ id: Date.now(), titulo: "Nueva Charla", mensajes: [] }];
-        let actualId = sesiones[0].id;
-
-        if (sesiones[0].mensajes.length === 0) {
-            sesiones[0].mensajes.push({ role: 'assistant', content: "Aquí estoy de nuevo. Sé que a veces me pongo intenso, pero he bajado el tono. Considérame ese amigo cínico que te quiere ver triunfar, aunque tenga que reírme un poco de tus ocurrencias. La vida es demasiado corta para ser un soso y demasiado seria para no tener un plan brillante. ¿Qué traes en mente hoy? Suéltalo." });
-        }
-
-        function toggleSidebar() { 
-            document.getElementById('sidebar').classList.toggle('open');
-            document.getElementById('overlay').classList.toggle('open');
-        }
-
-        function guardar() { localStorage.setItem('inquisidor_sesiones', JSON.stringify(sesiones)); renderSidebar(); renderChat(); }
-
-        function renderSidebar() {
-            const list = document.getElementById('lista-sesiones');
-            list.innerHTML = sesiones.map(s => `
-                <div class="group flex items-center justify-between p-3 cursor-pointer rounded text-sm ${s.id === actualId ? 'bg-zinc-800 border-l-2 border-amber-600' : 'hover:bg-zinc-900'}">
-                    <span onclick="cambiarSesion(${s.id})" class="truncate flex-1">${s.titulo}</span>
-                    <button onclick="borrarSesion(${s.id})" class="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-400">✕</button>
-                </div>
-            `).join('');
-        }
-
-        function borrarSesion(id) {
-            event.stopPropagation();
-            if(sesiones.length <= 1) { alert("No puedes borrar la única charla."); return; }
-            sesiones = sesiones.filter(s => s.id !== id);
-            actualId = sesiones[0].id;
-            guardar();
-        }
-
-        function cambiarSesion(id) { 
-            actualId = id; 
-            renderChat(); 
-            renderSidebar(); 
-            if(window.innerWidth < 768) toggleSidebar(); 
-        }
-
-        function nuevaSesion() {
-            const nueva = { id: Date.now(), titulo: "Nueva Charla", mensajes: [{ role: 'assistant', content: "Hoja en blanco. ¿Qué vamos a desmenuzar hoy?" }] };
-            sesiones.unshift(nueva);
-            actualId = nueva.id;
-            guardar();
-            if(window.innerWidth < 768) toggleSidebar();
-        }
+        const userId = 'user_123'; // Esto debería ser dinámico luego
+        let mensajes = [{ role: 'assistant', content: "Aquí estoy. ¿Qué traes en mente hoy? Suéltalo." }];
 
         function renderChat() {
-            const s = sesiones.find(x => x.id === actualId);
             const container = document.getElementById('chat-container');
-            container.innerHTML = s.mensajes.map(m => `
-                <div class="${m.role === 'user' ? 'text-right' : 'bg-[#1a1710] border-l-4 border-amber-600 p-4'}">
-                    <div class="${m.role === 'user' ? 'inline-block p-4 bg-zinc-900 rounded' : ''}">${m.content}</div>
+            container.innerHTML = mensajes.map(m => `
+                <div class="${m.role === 'user' ? 'text-right' : 'bg-zinc-900 p-4 rounded'}">
+                    ${m.content}
                 </div>
             `).join('');
-            document.getElementById('chat-scroll').scrollTop = document.getElementById('chat-scroll').scrollHeight;
         }
 
         async function enviar() {
             const input = document.getElementById('input');
             const text = input.value.trim();
             if (!text) return;
-            let s = sesiones.find(x => x.id === actualId);
-            s.mensajes.push({ role: 'user', content: text });
-            if (s.mensajes.length === 2) s.titulo = text.substring(0, 20);
+
+            mensajes.push({ role: 'user', content: text });
             input.value = '';
             renderChat();
-            const res = await fetch('/api/chat', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ messages: s.mensajes }) });
+
+            const res = await fetch('/api/chat', { 
+                method: 'POST', 
+                headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify({ messages, userId }) 
+            });
+            
             const data = await res.json();
-            s.mensajes.push({ role: 'assistant', content: data.content });
-            guardar();
+            mensajes.push({ role: 'assistant', content: data.content });
+            renderChat();
         }
 
         document.getElementById('send-btn').onclick = enviar;
-        document.getElementById('input').onkeydown = (e) => { if(e.key === 'Enter') enviar(); };
-        renderSidebar(); renderChat();
+        renderChat();
     </script>
 </body>
 </html>
