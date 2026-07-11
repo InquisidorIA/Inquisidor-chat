@@ -6,60 +6,49 @@
     <title>Clarence | Terminal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Fondo base negro absoluto */
-        body { background-color: #000; }
+        body { background-color: #000; margin: 0; }
 
-        /* Capa morada progresiva */
-        .aura-layer {
+        /* Capa permanente que solo cambia de opacidad */
+        #fx-layer {
             position: fixed;
             inset: 0;
-            background: radial-gradient(circle at 50% 50%, #2e1065 0%, #000 80%);
-            opacity: 0;
-            transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-            pointer-events: none;
             z-index: -1;
+            opacity: 0;
+            will-change: opacity;
+            transition: opacity 2s ease-in-out;
+            background: radial-gradient(circle at 50% 50%, #2e1065 0%, #000 70%);
         }
 
-        /* Puntitos blancos */
-        .stars-layer {
+        #fx-stars {
             position: fixed;
             inset: 0;
+            z-index: -1;
+            opacity: 0;
+            will-change: opacity;
+            transition: opacity 2s ease-in-out;
             background-image: radial-gradient(white, rgba(255,255,255,0.2) 1px, transparent 1px);
             background-size: 50px 50px;
-            opacity: 0;
-            transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-            pointer-events: none;
-            z-index: -1;
         }
-
-        /* Estado activo */
-        .is-loading .aura-layer, 
-        .is-loading .stars-layer {
-            opacity: 0.5;
-        }
-
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
     </style>
 </head>
-<body class="text-zinc-200 h-screen flex flex-col font-sans" id="main-body">
+<body class="text-zinc-200 h-screen flex flex-col font-sans">
     
     <!-- Capas de efectos -->
-    <div class="aura-layer"></div>
-    <div class="stars-layer"></div>
+    <div id="fx-layer"></div>
+    <div id="fx-stars"></div>
 
     <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-6">
         <div class="max-w-3xl mx-auto space-y-6 pt-4" id="messages-list"></div>
     </div>
 
-    <div class="p-4 border-t border-zinc-800">
+    <div class="p-4 border-t border-zinc-800 bg-[#0A0A0A]/50">
         <div class="max-w-3xl mx-auto">
-            <div class="relative bg-zinc-900 rounded-xl border border-zinc-700 focus-within:border-purple-500 transition-all">
+            <div class="relative bg-zinc-900 rounded-xl border border-zinc-700">
                 <input id="input" 
                     class="w-full bg-transparent p-4 pr-16 text-white outline-none" 
                     placeholder="Escribe lo que tienes en mente..."
                     onkeydown="if(event.key==='Enter') enviar()">
-                <button id="send-btn" class="absolute right-2 top-2 bottom-2 px-4 bg-purple-700 hover:bg-purple-600 text-white font-medium rounded-lg transition-colors">
+                <button id="send-btn" class="absolute right-2 top-2 bottom-2 px-4 bg-purple-700 text-white font-medium rounded-lg transition-colors">
                     Enviar
                 </button>
             </div>
@@ -69,6 +58,14 @@
     <script>
         const userId = 'user_123';
         let mensajes = [{ role: 'assistant', content: "Aquí estoy. ¿Qué traes en mente hoy? Suéltalo." }];
+
+        function toggleEffect(active) {
+            const layer = document.getElementById('fx-layer');
+            const stars = document.getElementById('fx-stars');
+            const opacity = active ? '0.4' : '0';
+            layer.style.opacity = opacity;
+            stars.style.opacity = opacity;
+        }
 
         function renderChat() {
             const list = document.getElementById('messages-list');
@@ -83,8 +80,7 @@
                     </div>
                 </div>
             `).join('');
-            const container = document.getElementById('chat-container');
-            container.scrollTop = container.scrollHeight;
+            document.getElementById('chat-container').scrollTop = document.getElementById('chat-container').scrollHeight;
         }
 
         async function enviar() {
@@ -92,8 +88,7 @@
             const text = input.value.trim();
             if (!text) return;
 
-            const body = document.getElementById('main-body');
-            body.classList.add('is-loading');
+            toggleEffect(true); // Encendido suave
 
             mensajes.push({ role: 'user', content: text });
             input.value = '';
@@ -108,9 +103,9 @@
                 const data = await res.json();
                 mensajes.push({ role: 'assistant', content: data.content });
             } catch (e) {
-                mensajes.push({ role: 'assistant', content: "Error técnico. Clarence no responde." });
+                mensajes.push({ role: 'assistant', content: "Error técnico." });
             } finally {
-                body.classList.remove('is-loading');
+                toggleEffect(false); // Apagado suave
                 renderChat();
             }
         }
