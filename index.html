@@ -2,85 +2,51 @@
 <html lang="es" class="h-full">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Clarence | Terminal</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { background-color: #000; margin: 0; }
-
-        /* Capa permanente que solo cambia de opacidad */
-        #fx-layer {
-            position: fixed;
-            inset: 0;
-            z-index: -1;
-            opacity: 0;
-            will-change: opacity;
-            transition: opacity 2s ease-in-out;
-            background: radial-gradient(circle at 50% 50%, #2e1065 0%, #000 70%);
-        }
-
-        #fx-stars {
-            position: fixed;
-            inset: 0;
-            z-index: -1;
-            opacity: 0;
-            will-change: opacity;
-            transition: opacity 2s ease-in-out;
-            background-image: radial-gradient(white, rgba(255,255,255,0.2) 1px, transparent 1px);
-            background-size: 50px 50px;
-        }
+        body { background-color: #000; }
+        #fx-layer, #fx-stars { position: fixed; inset: 0; z-index: -1; opacity: 0; transition: opacity 2s ease-in-out; pointer-events: none; }
+        #fx-layer { background: radial-gradient(circle at 50% 50%, #2e1065 0%, #000 70%); }
+        #fx-stars { background-image: radial-gradient(white, rgba(255,255,255,0.2) 1px, transparent 1px); background-size: 50px 50px; }
     </style>
 </head>
 <body class="text-zinc-200 h-screen flex flex-col font-sans">
-    
-    <!-- Capas de efectos -->
-    <div id="fx-layer"></div>
-    <div id="fx-stars"></div>
+    <div id="fx-layer"></div><div id="fx-stars"></div>
 
-    <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-6">
-        <div class="max-w-3xl mx-auto space-y-6 pt-4" id="messages-list"></div>
+    <!-- Dashboard -->
+    <div class="p-4 border-b border-zinc-800 flex justify-center bg-[#0A0A0A]">
+        <div class="w-32 h-32"><canvas id="statsChart"></canvas></div>
     </div>
 
-    <div class="p-4 border-t border-zinc-800 bg-[#0A0A0A]/50">
-        <div class="max-w-3xl mx-auto">
-            <div class="relative bg-zinc-900 rounded-xl border border-zinc-700">
-                <input id="input" 
-                    class="w-full bg-transparent p-4 pr-16 text-white outline-none" 
-                    placeholder="Escribe lo que tienes en mente..."
-                    onkeydown="if(event.key==='Enter') enviar()">
-                <button id="send-btn" class="absolute right-2 top-2 bottom-2 px-4 bg-purple-700 text-white font-medium rounded-lg transition-colors">
-                    Enviar
-                </button>
-            </div>
+    <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-6">
+        <div class="max-w-3xl mx-auto space-y-6" id="messages-list"></div>
+    </div>
+
+    <div class="p-4 border-t border-zinc-800 bg-[#0A0A0A]">
+        <div class="max-w-3xl mx-auto flex gap-2">
+            <input id="input" class="flex-1 bg-zinc-900 p-4 rounded-xl border border-zinc-700 outline-none focus:border-purple-500" placeholder="Habla con tu jefe...">
+            <button id="send-btn" class="px-6 bg-purple-700 rounded-xl hover:bg-purple-600">Enviar</button>
         </div>
     </div>
 
     <script>
         const userId = 'user_123';
-        let mensajes = [{ role: 'assistant', content: "Aquí estoy. ¿Qué traes en mente hoy? Suéltalo." }];
+        let mensajes = [{ role: 'assistant', content: "Aquí estoy. ¿Qué traes en mente hoy?" }];
 
-        function toggleEffect(active) {
-            const layer = document.getElementById('fx-layer');
-            const stars = document.getElementById('fx-stars');
-            const opacity = active ? '0.4' : '0';
-            layer.style.opacity = opacity;
-            stars.style.opacity = opacity;
-        }
-
-        function renderChat() {
-            const list = document.getElementById('messages-list');
-            list.innerHTML = mensajes.map(m => `
-                <div class="flex gap-4 ${m.role === 'user' ? 'justify-end' : 'justify-start'}">
-                    <div class="max-w-[85%] p-4 rounded-2xl shadow-sm ${
-                        m.role === 'user' 
-                        ? 'bg-zinc-800 text-zinc-100' 
-                        : 'bg-zinc-900/50 border border-purple-500/20 text-zinc-200'
-                    }">
-                        ${m.content}
-                    </div>
-                </div>
-            `).join('');
-            document.getElementById('chat-container').scrollTop = document.getElementById('chat-container').scrollHeight;
+        async function loadStats() {
+            const res = await fetch(`/api/stats?userId=${userId}`);
+            const data = await res.json();
+            const ctx = document.getElementById('statsChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Prod', 'Creat', 'Desv'],
+                    datasets: [{ data: [data.Productivo, data.Creativo, data.Desviado], backgroundColor: ['#4ade80', '#fbbf24', '#f87171'] }]
+                },
+                options: { plugins: { legend: { display: false } } }
+            });
         }
 
         async function enviar() {
@@ -88,29 +54,29 @@
             const text = input.value.trim();
             if (!text) return;
 
-            toggleEffect(true); // Encendido suave
+            document.getElementById('fx-layer').style.opacity = '0.4';
+            document.getElementById('fx-stars').style.opacity = '0.4';
 
             mensajes.push({ role: 'user', content: text });
             input.value = '';
+            
+            const res = await fetch('/api/chat', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ messages: mensajes, userId }) });
+            const data = await res.json();
+            mensajes.push({ role: 'assistant', content: data.content });
+            
+            document.getElementById('fx-layer').style.opacity = '0';
+            document.getElementById('fx-stars').style.opacity = '0';
             renderChat();
+            loadStats();
+        }
 
-            try {
-                const res = await fetch('/api/chat', { 
-                    method: 'POST', 
-                    headers: {'Content-Type': 'application/json'}, 
-                    body: JSON.stringify({ messages: mensajes, userId }) 
-                });
-                const data = await res.json();
-                mensajes.push({ role: 'assistant', content: data.content });
-            } catch (e) {
-                mensajes.push({ role: 'assistant', content: "Error técnico." });
-            } finally {
-                toggleEffect(false); // Apagado suave
-                renderChat();
-            }
+        function renderChat() {
+            const list = document.getElementById('messages-list');
+            list.innerHTML = mensajes.map(m => `<div class="p-4 rounded-xl ${m.role==='user'?'bg-zinc-800 ml-auto':'bg-zinc-900 border border-purple-500/20'} max-w-[80%]">${m.content}</div>`).join('');
         }
 
         document.getElementById('send-btn').onclick = enviar;
+        loadStats();
         renderChat();
     </script>
 </body>
