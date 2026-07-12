@@ -3,87 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Clarence | Control</title>
+    <title>Clarence | Terminal</title>
     <style>
-        /* BASE Y LUCES */
+        :root { --bg: #000; --sidebar: rgba(20, 20, 20, 0.95); --accent: #6b21a8; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #000; color: #fff; font-family: sans-serif; height: 100vh; overflow: hidden; position: relative; }
+        body { background: var(--bg); color: #fff; font-family: sans-serif; height: 100vh; overflow: hidden; }
+
+        /* Estructura Grid: Sidebar + Main */
+        #app { display: grid; grid-template-columns: 280px 1fr; height: 100vh; width: 100vw; position: relative; }
         
-        #fx-layer { 
-            position: fixed; inset: 0; z-index: -1; 
-            background: radial-gradient(circle at 50% 50%, #2e1065 0%, #000 80%);
+        /* Barra lateral con "nubes" */
+        #sidebar { 
+            background: var(--sidebar); backdrop-filter: blur(20px); border-right: 1px solid #333; 
+            display: flex; flex-direction: column; z-index: 100; padding: 20px; transition: transform 0.3s ease;
         }
 
-        /* CAPA DE CHAT (SE DESENFOCA) */
-        #main-app { height: 100vh; display: flex; flex-direction: column; transition: filter 0.3s ease; }
-        #main-app.blur { filter: blur(8px) brightness(0.5); pointer-events: none; }
-
-        /* BARRA LATERAL NUBE */
-        #sidebar {
-            position: fixed; left: -300px; top: 0; width: 280px; height: 100%;
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            border-right: 1px solid rgba(255, 255, 255, 0.1);
-            transition: left 0.3s ease;
-            z-index: 1000; padding: 20px;
-            display: flex; flex-direction: column;
+        /* Responsive: El sidebar se oculta en móvil y se superpone */
+        @media (max-width: 768px) {
+            #app { grid-template-columns: 1fr; }
+            #sidebar { position: absolute; transform: translateX(-100%); }
+            #sidebar.open { transform: translateX(0); }
         }
-        #sidebar.open { left: 0; }
 
-        /* ESTILOS DE GESTIÓN */
+        /* Efectos visuales */
+        #fx-layer { position: absolute; inset: 0; z-index: -1; background: radial-gradient(circle, #2e1065 0%, #000 70%); }
+        
+        /* Gestión de Historial */
         .chat-item { 
-            padding: 10px; background: rgba(255,255,255,0.05); margin-bottom: 8px; 
-            border-radius: 8px; display: flex; justify-content: space-between; align-items: center; 
+            padding: 12px; background: rgba(255,255,255,0.05); margin-bottom: 8px; border-radius: 8px; 
+            display: flex; justify-content: space-between; align-items: center; border: 1px solid transparent;
         }
-        
-        /* INPUT FIJO */
+        .chat-item:hover { border-color: var(--accent); }
+
+        #main-content { display: flex; flex-direction: column; height: 100vh; }
+        #chat-window { flex: 1; overflow-y: auto; padding: 20px; }
         #input-zone { padding: 20px; border-top: 1px solid #333; display: flex; gap: 10px; }
         input { flex: 1; padding: 12px; background: #111; border: 1px solid #444; border-radius: 8px; color: #fff; }
-        button { padding: 10px 15px; background: #6b21a8; border: none; border-radius: 8px; cursor: pointer; color: white; }
     </style>
 </head>
 <body>
-
     <div id="fx-layer"></div>
-
-    <aside id="sidebar">
-        <h2 style="margin-bottom: 20px; color: #888; font-size: 12px;">MEMORIA</h2>
-        <div id="history-list" style="flex: 1;">
-            <div class="chat-item">
-                <span>Proyecto X</span>
-                <div><button onclick="edit(1)">✏️</button><button onclick="pin(1)">📌</button></div>
+    <div id="app">
+        <aside id="sidebar">
+            <h2 style="font-size: 10px; color: #666; margin-bottom: 20px;">MEMORIA</h2>
+            <div id="history-list">
+                <!-- Ejemplo de estructura de conversación -->
+                <div class="chat-item">
+                    <span>Proyecto Clarence</span>
+                    <div>
+                        <button onclick="edit()">✏️</button>
+                        <button onclick="pin()">📌</button>
+                        <button onclick="del()">🗑️</button>
+                    </div>
+                </div>
             </div>
-        </div>
-        <button>+ Nueva Conversación</button>
-    </aside>
+        </aside>
 
-    <main id="main-app">
-        <header style="padding: 15px;"><button id="toggle-btn">☰ Menú</button></header>
-        <div id="chat" style="flex: 1; overflow-y: auto; padding: 20px;"></div>
-        <div id="input-zone">
-            <input id="input" placeholder="Habla con tu jefe...">
-            <button id="send-btn">Enviar</button>
-        </div>
-    </main>
+        <main id="main-content">
+            <header style="padding: 15px;"><button id="toggle-btn">☰ Menú</button></header>
+            <div id="chat-window"></div>
+            <div id="input-zone">
+                <input id="input" placeholder="Habla con tu jefe...">
+                <button id="send-btn">Enviar</button>
+            </div>
+        </main>
+    </div>
 
     <script>
         const sidebar = document.getElementById('sidebar');
-        const mainApp = document.getElementById('main-app');
         const toggleBtn = document.getElementById('toggle-btn');
+        
+        toggleBtn.onclick = () => sidebar.classList.toggle('open');
 
-        // Lógica de apertura con desenfoque
-        toggleBtn.onclick = () => {
-            sidebar.classList.toggle('open');
-            mainApp.classList.toggle('blur');
-        };
-
-        // Cerrar al hacer clic en el chat desenfocado
-        mainApp.onclick = (e) => {
-            if(mainApp.classList.contains('blur')) {
-                sidebar.classList.remove('open');
-                mainApp.classList.remove('blur');
-            }
-        };
+        function edit() { alert("Función renombrar"); }
+        function pin() { alert("Función fijar"); }
+        function del() { alert("Función borrar"); }
     </script>
 </body>
 </html>
