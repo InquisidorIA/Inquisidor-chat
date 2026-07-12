@@ -2,70 +2,70 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Clarence</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #000; color: #fff; font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden; }
 
-        /* Fondo: Puntos sutiles y morado oscuro */
+        /* Fondo de puntos sutiles */
         #bg-effect {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: radial-gradient(circle at center, #2e003e 0%, #000 70%);
-            background-image: radial-gradient(rgba(255,255,255,0.2) 1px, transparent 1px);
-            background-size: 50px 50px;
-            opacity: 0; 
-            pointer-events: none; 
-            z-index: 0;
+            background-image: radial-gradient(rgba(255,255,255,0.15) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0; pointer-events: none; z-index: 0;
         }
 
-        /* Animación: Aparece, brilla suave y desaparece sola */
-        @keyframes respirarSuave {
+        /* Animación suave: Aparece y desaparece */
+        @keyframes respirar {
             0% { opacity: 0; }
-            30% { opacity: 0.8; }
-            70% { opacity: 0.4; }
+            50% { opacity: 1; }
             100% { opacity: 0; }
         }
-
-        .animar-respiracion {
-            animation: respirarSuave 3s ease-in-out forwards;
-        }
+        .respirar-anim { animation: respirar 4s ease-in-out forwards; }
 
         #menu-btn { 
             position: absolute; top: 20px; left: 20px; z-index: 100;
             background: transparent; border: 1px solid rgba(255,255,255,0.3);
             border-radius: 50%; width: 50px; height: 50px; cursor: pointer;
-            font-size: 24px; color: white; display: flex; align-items: center; justify-content: center;
+            color: white; display: flex; align-items: center; justify-content: center;
         }
 
         #chat-container { width: 100%; height: 100%; display: flex; flex-direction: column; padding: 80px 20px 20px; z-index: 1; position: relative; }
         #messages { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
         
-        .clarence-msg { align-self: flex-start; padding: 15px 20px; border-radius: 20px; background: linear-gradient(135deg, #4527a0, #000); color: #fff; max-width: 80%; border: 1px solid #673ab7; }
-        .user-msg { align-self: flex-end; padding: 15px 20px; border-radius: 20px; background: #222; color: #fff; max-width: 80%; }
-        
+        .clarence-msg { align-self: flex-start; padding: 15px 20px; border-radius: 20px; background: linear-gradient(135deg, #4527a0, #000); border: 1px solid #673ab7; max-width: 80%; }
+        .user-msg { align-self: flex-end; padding: 15px 20px; border-radius: 20px; background: #222; max-width: 80%; }
+
         #input-zone { display: flex; gap: 10px; padding-bottom: 20px; }
         input { flex-grow: 1; background: #1a1a1a; border: 1px solid #333; padding: 15px; border-radius: 15px; color: white; outline: none; }
-        #send-btn { background: #311b92; border: none; padding: 15px 25px; border-radius: 15px; color: white; cursor: pointer; }
     </style>
 </head>
 <body>
     <div id="bg-effect"></div>
-    <button id="menu-btn" onclick="toggleMenu()">◡</button>
+    <button id="menu-btn" onclick="toggleHistory()">☰</button>
 
     <div id="chat-container">
         <div id="messages"><p class="clarence-msg">Hola, soy Clarence. ¿En qué te puedo ayudar hoy?</p></div>
         <div id="input-zone">
-            <input type="text" id="user-input" placeholder="Escribe tu mensaje...">
-            <button id="send-btn" onclick="sendMessage()">Enviar</button>
+            <input type="text" id="user-input" placeholder="Escribe tu mensaje..." onkeydown="if(event.key==='Enter') sendMessage()">
+            <button onclick="sendMessage()" style="padding:0 20px; border-radius:15px; background:#311b92; color:white; border:none; cursor:pointer;">Enviar</button>
         </div>
     </div>
 
     <script>
-        function toggleMenu() {
+        // Función para el botón menú (Historial)
+        function toggleHistory() {
+            console.log("Desplegando historial..."); // Aquí va tu lógica de historial
+        }
+
+        // Función centralizada para la iluminación (Respiración)
+        function triggerPulse() {
             const bg = document.getElementById('bg-effect');
-            // Manual: si presionas la sonrisa, se enciende/apaga
-            bg.style.opacity = (bg.style.opacity === '1') ? '0' : '1';
+            bg.classList.remove('respirar-anim');
+            void bg.offsetWidth; // Reset de animación
+            bg.classList.add('respirar-anim');
         }
 
         async function sendMessage() {
@@ -73,38 +73,25 @@
             const msg = input.value;
             if(msg.trim() === "") return;
 
-            const bg = document.getElementById('bg-effect');
+            // 1. Mostrar mensaje
             const chat = document.getElementById('messages');
-
-            // 1. Disparar la animación de respiración automática
-            bg.classList.remove('animar-respiracion');
-            void bg.offsetWidth; // Reinicio de animación
-            bg.classList.add('animar-respiracion');
-
-            // 2. Mostrar mensaje de usuario
             chat.innerHTML += `<p class="user-msg">${msg}</p>`;
             input.value = "";
 
-            const loader = document.createElement('p');
-            loader.className = 'clarence-msg';
-            loader.innerText = "Clarence está analizando...";
-            chat.appendChild(loader);
-            chat.scrollTop = chat.scrollHeight;
+            // 2. Activar "respiración" de luces
+            triggerPulse();
 
-            // 3. Comunicación con el backend
+            // 3. Llamada a la IA
             try {
                 const res = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        userId: 'nacho', 
-                        messages: [{ role: 'user', content: msg }] 
-                    })
+                    body: JSON.stringify({ userId: 'nacho', messages: [{ role: 'user', content: msg }] })
                 });
                 const data = await res.json();
-                loader.innerText = data.content || "Error en respuesta.";
+                chat.innerHTML += `<p class="clarence-msg">${data.content}</p>`;
             } catch (e) {
-                loader.innerText = "Error de conexión con el backend.";
+                chat.innerHTML += `<p class="clarence-msg">Error de conexión.</p>`;
             }
             chat.scrollTop = chat.scrollHeight;
         }
