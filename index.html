@@ -4,63 +4,68 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Clarence</title>
+    <link rel="manifest" href="/manifest.json">
     <style>
-        /* RESET ABSOLUTO */
+        /* RESET Y BASE */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { width: 100%; height: 100%; overflow: hidden; background: #000; color: #fff; font-family: sans-serif; }
+        html, body { width: 100%; height: 100%; overflow: hidden; background: #000; color: #fff; font-family: 'Segoe UI', sans-serif; }
 
-        /* CONTENEDOR PRINCIPAL */
+        /* CONTENEDOR PRINCIPAL - Forzado a tamaño de pantalla */
         #app { width: 100vw; height: 100vh; position: relative; }
 
-        /* BARRA LATERAL (EL MENÚ) */
+        /* BARRA LATERAL */
         #sidebar { 
             position: absolute; top: 0; left: -280px; width: 280px; height: 100%; 
-            background: rgba(20, 20, 20, 0.95); backdrop-filter: blur(20px); 
-            border-right: 1px solid #444; z-index: 1000; transition: left 0.3s ease;
+            background: rgba(15, 15, 15, 0.98); border-right: 1px solid #333; 
+            z-index: 1000; transition: left 0.3s ease;
             display: flex; flex-direction: column; padding: 20px;
         }
         #sidebar.activo { left: 0; }
 
-        /* CHAT Y CAPA DE EFECTO */
-        #main-chat { width: 100%; height: 100%; display: flex; flex-direction: column; transition: filter 0.3s; }
-        #main-chat.blur { filter: blur(8px); pointer-events: none; }
+        /* EFECTO DE LUZ/DESENFOQUE EN EL CHAT */
+        #main-chat { 
+            width: 100%; height: 100%; display: flex; flex-direction: column; 
+            transition: filter 0.3s, background 0.3s;
+        }
+        #main-chat.blur { filter: blur(5px); pointer-events: none; }
 
-        /* INPUT FIJO */
-        #input-zone { padding: 20px; border-top: 1px solid #333; background: #000; }
-        input { width: 100%; padding: 12px; background: #111; border: 1px solid #444; color: #fff; border-radius: 8px; }
-        button { padding: 10px; background: #6b21a8; border: none; color: white; border-radius: 8px; cursor: pointer; }
+        /* INTERFAZ CHAT */
+        #chat-window { flex-grow: 1; padding: 20px; overflow-y: auto; }
+        #input-zone { padding: 20px; border-top: 1px solid #222; background: #000; }
+        
+        input { 
+            width: 100%; padding: 15px; background: #1a1a1a; border: 1px solid #444; 
+            color: #fff; border-radius: 12px; outline: none; 
+        }
+
+        /* BOTONES Y ESTILOS */
+        .menu-btn { padding: 10px; background: transparent; border: 1px solid #444; color: white; border-radius: 8px; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div id="app">
-        <!-- BARRA LATERAL (HISTORIAL) -->
         <aside id="sidebar">
-            <h2 style="margin-bottom: 20px; font-size: 14px; color: #888;">MEMORIA</h2>
-            <div id="history-list" style="flex-grow: 1;">
-                <div style="padding: 10px; background: #333; border-radius: 8px; margin-bottom: 5px;">
-                    Conversación 1 ✏️📌🗑️
-                </div>
-            </div>
-            <button>+ Nueva Conversación</button>
-            <button onclick="cerrarMenu()" style="margin-top: 10px; background: #444;">Cerrar</button>
+            <h2 style="margin-bottom: 20px; font-size: 12px; color: #666; letter-spacing: 2px;">HISTORIAL</h2>
+            <div id="history-list" style="flex-grow: 1;"></div>
+            <button class="menu-btn" onclick="cerrarMenu()">Cerrar Menú</button>
         </aside>
 
-        <!-- CHAT -->
         <main id="main-chat">
             <header style="padding: 15px;">
-                <button onclick="abrirMenu()">☰ Menú</button>
+                <button class="menu-btn" onclick="abrirMenu()">☰ Menú</button>
             </header>
-            <div id="chat-window" style="flex-grow: 1; padding: 20px;">
-                <p>Chat activo.</p>
+            <div id="chat-window">
+                <p>Bienvenido, Nacho.</p>
             </div>
             <div id="input-zone">
-                <input type="text" placeholder="Habla con tu jefe...">
+                <input type="text" placeholder="Escribe tu mensaje...">
             </div>
         </main>
     </div>
 
     <script>
+        // Lógica de apertura/cierre
         function abrirMenu() {
             document.getElementById('sidebar').classList.add('activo');
             document.getElementById('main-chat').classList.add('blur');
@@ -68,6 +73,13 @@
         function cerrarMenu() {
             document.getElementById('sidebar').classList.remove('activo');
             document.getElementById('main-chat').classList.remove('blur');
+        }
+
+        // Registro del Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+            .then(() => console.log('SW activo'))
+            .catch(err => console.log('Error SW:', err));
         }
     </script>
 </body>
