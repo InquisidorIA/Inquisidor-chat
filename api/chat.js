@@ -11,7 +11,7 @@ export default async function handler(req, res) {
   try {
     // 1. Guardar mensaje usuario
     await supabase.from('chat_memory').insert({ 
-      user_id: userId, message: messages[0].content, role: 'user', chat_id: chatId, title: title 
+      user_id: userId, message: messages[messages.length - 1].content, role: 'user', chat_id: chatId, title: title 
     });
 
     // 2. Traer historial y formatearlo para la IA
@@ -24,7 +24,12 @@ export default async function handler(req, res) {
     const history = dbData.map(item => ({ role: item.role, content: item.message }));
 
     // 3. Respuesta IA
+    // Pasamos el historial completo para que la IA tenga contexto, tal como definimos en clarence.js
     const result = await getClarenceResponse(history, userId);
+    
+    // Verificación de seguridad básica por si la API falla
+    if (!result.choices || result.choices.length === 0) throw new Error("Respuesta vacía de la IA");
+    
     const aiMessage = result.choices[0].message.content;
 
     // 4. Guardar respuesta IA
