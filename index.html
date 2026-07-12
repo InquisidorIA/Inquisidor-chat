@@ -3,74 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Clarence | Terminal</title>
+    <title>Clarence | Control</title>
     <style>
+        /* BASE Y LUCES */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #000; color: #fff; font-family: sans-serif; height: 100vh; display: flex; overflow: hidden; }
+        body { background: #000; color: #fff; font-family: sans-serif; height: 100vh; overflow: hidden; position: relative; }
+        
+        #fx-layer { 
+            position: fixed; inset: 0; z-index: -1; 
+            background: radial-gradient(circle at 50% 50%, #2e1065 0%, #000 80%);
+        }
 
-        /* Barra Desplegable (Nube) */
+        /* CAPA DE CHAT (SE DESENFOCA) */
+        #main-app { height: 100vh; display: flex; flex-direction: column; transition: filter 0.3s ease; }
+        #main-app.blur { filter: blur(8px) brightness(0.5); pointer-events: none; }
+
+        /* BARRA LATERAL NUBE */
         #sidebar {
             position: fixed; left: -300px; top: 0; width: 280px; height: 100%;
-            background: rgba(20, 20, 20, 0.95);
+            background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(20px);
-            border-right: 1px solid #333;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
             transition: left 0.3s ease;
-            z-index: 100;
-            padding: 20px;
+            z-index: 1000; padding: 20px;
+            display: flex; flex-direction: column;
         }
         #sidebar.open { left: 0; }
 
-        /* Pantalla */
-        #main { flex: 1; display: flex; flex-direction: column; width: 100%; }
-        header { padding: 15px; border-bottom: 1px solid #333; display: flex; gap: 15px; align-items: center; }
-        #chat { flex: 1; overflow-y: auto; padding: 20px; }
-        #input-area { padding: 20px; border-top: 1px solid #333; display: flex; gap: 10px; }
+        /* ESTILOS DE GESTIÓN */
+        .chat-item { 
+            padding: 10px; background: rgba(255,255,255,0.05); margin-bottom: 8px; 
+            border-radius: 8px; display: flex; justify-content: space-between; align-items: center; 
+        }
         
+        /* INPUT FIJO */
+        #input-zone { padding: 20px; border-top: 1px solid #333; display: flex; gap: 10px; }
         input { flex: 1; padding: 12px; background: #111; border: 1px solid #444; border-radius: 8px; color: #fff; }
-        button { padding: 10px 15px; background: #6b21a8; border: none; border-radius: 8px; color: white; cursor: pointer; }
+        button { padding: 10px 15px; background: #6b21a8; border: none; border-radius: 8px; cursor: pointer; color: white; }
     </style>
 </head>
 <body>
 
+    <div id="fx-layer"></div>
+
     <aside id="sidebar">
-        <h2 style="margin-bottom: 20px; color: #888;">MEMORIA</h2>
-        <div id="history">Cargando...</div>
-        <button style="margin-top: 20px; width: 100%;">+ Nueva Charla</button>
+        <h2 style="margin-bottom: 20px; color: #888; font-size: 12px;">MEMORIA</h2>
+        <div id="history-list" style="flex: 1;">
+            <div class="chat-item">
+                <span>Proyecto X</span>
+                <div><button onclick="edit(1)">✏️</button><button onclick="pin(1)">📌</button></div>
+            </div>
+        </div>
+        <button>+ Nueva Conversación</button>
     </aside>
 
-    <main id="main">
-        <header>
-            <button id="toggle-btn">☰</button>
-            <span>Clarence</span>
-        </header>
-        <div id="chat"><div id="messages"></div></div>
-        <div id="input-area">
-            <input id="input" type="text" placeholder="Habla con tu jefe...">
+    <main id="main-app">
+        <header style="padding: 15px;"><button id="toggle-btn">☰ Menú</button></header>
+        <div id="chat" style="flex: 1; overflow-y: auto; padding: 20px;"></div>
+        <div id="input-zone">
+            <input id="input" placeholder="Habla con tu jefe...">
             <button id="send-btn">Enviar</button>
         </div>
     </main>
 
     <script>
         const sidebar = document.getElementById('sidebar');
+        const mainApp = document.getElementById('main-app');
         const toggleBtn = document.getElementById('toggle-btn');
-        const input = document.getElementById('input');
-        const sendBtn = document.getElementById('send-btn');
-        const messages = document.getElementById('messages');
 
-        // Toggle Sidebar
-        toggleBtn.onclick = () => sidebar.classList.toggle('open');
+        // Lógica de apertura con desenfoque
+        toggleBtn.onclick = () => {
+            sidebar.classList.toggle('open');
+            mainApp.classList.toggle('blur');
+        };
 
-        // Lógica envío
-        function enviar() {
-            if(!input.value.trim()) return;
-            messages.innerHTML += `<div style="padding: 10px; background: #222; margin-bottom: 10px; border-radius: 8px;">${input.value}</div>`;
-            input.value = '';
-            // Auto scroll
-            document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
-        }
-
-        sendBtn.onclick = enviar;
-        input.onkeydown = (e) => { if(e.key === 'Enter') enviar(); };
+        // Cerrar al hacer clic en el chat desenfocado
+        mainApp.onclick = (e) => {
+            if(mainApp.classList.contains('blur')) {
+                sidebar.classList.remove('open');
+                mainApp.classList.remove('blur');
+            }
+        };
     </script>
 </body>
 </html>
