@@ -8,17 +8,14 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #000; color: #fff; font-family: 'Segoe UI', sans-serif; overflow: hidden; height: 100vh; }
 
-        /* FONDO Y LUCES */
+        /* EFECTO LUCES Y ESTRELLAS */
         #bg-effect {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: radial-gradient(circle at center, #2e003e 0%, #000 70%);
-            opacity: 0; transition: opacity 2s ease-in-out;
-            pointer-events: none;
+            opacity: 0; transition: opacity 2s ease-in-out; pointer-events: none;
         }
-        /* Estrellas blancas */
-        .stars { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: transparent; opacity: 0; transition: opacity 2s ease-in-out; }
 
-        /* MENÚ SONRISA */
+        /* SONRISA */
         #menu-btn { 
             position: absolute; top: 20px; left: 20px; z-index: 100;
             background: transparent; border: 1px solid rgba(255,255,255,0.3);
@@ -26,14 +23,24 @@
             font-size: 24px; color: white; display: flex; align-items: center; justify-content: center;
         }
 
-        /* CHAT */
+        /* CHAT Y BURBUJAS */
         #chat-container { width: 100%; height: 100%; display: flex; flex-direction: column; padding: 80px 20px 20px; }
-        #messages { flex-grow: 1; overflow-y: auto; }
-        .clarence-msg { color: #b388ff; margin-bottom: 15px; font-size: 1.1em; }
+        #messages { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; }
+        
+        .clarence-msg {
+            align-self: flex-start;
+            padding: 15px 20px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, #4527a0, #000);
+            color: #fff;
+            margin-bottom: 20px;
+            max-width: 80%;
+            border: 1px solid #673ab7;
+        }
 
         /* INPUT Y BOTÓN */
         #input-zone { display: flex; gap: 10px; padding-bottom: 20px; }
-        input { flex-grow: 1; background: #1a1a1a; border: 1px solid #333; padding: 15px; border-radius: 15px; color: white; }
+        input { flex-grow: 1; background: #1a1a1a; border: 1px solid #333; padding: 15px; border-radius: 15px; color: white; outline: none; }
         #send-btn { background: #311b92; border: none; padding: 15px 25px; border-radius: 15px; color: white; cursor: pointer; }
     </style>
 </head>
@@ -47,7 +54,7 @@
             <p class="clarence-msg">Hola, soy Clarence. ¿En qué te puedo ayudar hoy?</p>
         </div>
         <div id="input-zone">
-            <input type="text" id="user-input" placeholder="Escribe tu mensaje...">
+            <input type="text" id="user-input" placeholder="Escribe tu mensaje..." onkeypress="handleKey(event)">
             <button id="send-btn" onclick="sendMessage()">Enviar</button>
         </div>
     </div>
@@ -55,17 +62,25 @@
     <script>
         function toggleLights() {
             const bg = document.getElementById('bg-effect');
-            bg.style.opacity = bg.style.opacity === '1' ? '0' : '1';
+            bg.style.opacity = (bg.style.opacity === '1') ? '0' : '1';
         }
 
-        function sendMessage() {
+        function handleKey(event) {
+            if (event.key === 'Enter') sendMessage();
+        }
+
+        async function sendMessage() {
             const input = document.getElementById('user-input');
             const msg = input.value;
-            if(msg.trim() !== "") {
-                const chat = document.getElementById('messages');
-                chat.innerHTML += `<p style="text-align: right;">${msg}</p>`;
-                input.value = "";
-            }
+            if(msg.trim() === "") return;
+
+            const chat = document.getElementById('messages');
+            chat.innerHTML += `<p style="align-self: flex-end; background: #222; padding: 10px 15px; border-radius: 15px; margin-bottom: 10px;">${msg}</p>`;
+            input.value = "";
+
+            // Aquí Clarence responderá (simulación)
+            chat.innerHTML += `<p class="clarence-msg">Clarence está analizando...</p>`;
+            chat.scrollTop = chat.scrollHeight;
         }
     </script>
 </body>
