@@ -8,15 +8,18 @@ export default async function handler(req, res) {
   const { messages, userId, chatId, title } = req.body;
   if (!messages || !chatId) return res.status(400).json({ content: "Faltan datos." });
 
+  // Selección dinámica de tabla
+  const table = chatId === 'public' ? 'public_chats' : 'chat_memory';
+
   try {
     // 1. Guardar mensaje usuario
-    await supabase.from('chat_memory').insert({ 
+    await supabase.from(table).insert({ 
       user_id: userId, message: messages[messages.length - 1].content, role: 'user', chat_id: chatId, title: title 
     });
 
-    // 2. Traer historial y formatearlo para la IA
+    // 2. Traer historial
     const { data: dbData } = await supabase
-      .from('chat_memory')
+      .from(table)
       .select('role, message')
       .eq('chat_id', chatId)
       .order('created_at', { ascending: true });
@@ -24,7 +27,6 @@ export default async function handler(req, res) {
     const history = dbData.map(item => ({ role: item.role, content: item.message }));
 
     // 3. Respuesta IA
-    // Pasamos chatId para que la función sepa qué historial consultar
     const result = await getClarenceResponse(history, userId, chatId);
     
     if (!result.choices || result.choices.length === 0) throw new Error("Respuesta vacía de la IA");
@@ -32,7 +34,7 @@ export default async function handler(req, res) {
     const aiMessage = result.choices[0].message.content;
 
     // 4. Guardar respuesta IA
-    await supabase.from('chat_memory').insert({ 
+    await supabase.from(table).insert({ 
       user_id: userId, message: aiMessage, role: 'assistant', chat_id: chatId, title: title 
     });
 
