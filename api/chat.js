@@ -1,52 +1,55 @@
 import { getClarenceResponse } from './clarence';
 import { createClient } from '@supabase/supabase-js';
 
-// Inicialización de Supabase con tus variables de entorno configuradas en Vercel
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
 export default async function handler(req, res) {
-  // Aseguramos que solo aceptamos peticiones POST
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método no permitido' });
   }
 
-  console.log("Servidor: Procesando nueva interacción de chat...");
-
-  const { messages, userId } = req.body;
+  // 1. AÑADE 'chatId' aquí para recibirlo desde el frontend
+  const { messages, userId, chatId } = req.body; 
   
-  // Validamos que existan mensajes
-  if (!messages || messages.length === 0) {
-    return res.status(400).json({ content: "No hay historial de mensajes." });
+  if (!messages || messages.length === 0 || !chatId) {
+    return res.status(400).json({ content: "Faltan datos de la conversación." });
   }
 
   const userMessage = messages[messages.length - 1].content;
 
   try {
-    // 1. Guardar mensaje del usuario en Supabase
+    // 2. AÑADE 'chat_id: chatId' en la inserción del mensaje del usuario
     const { error: userError } = await supabase
       .from('chat_memory')
-      .insert({ user_id: userId, message: userMessage, role: 'user' });
+      .insert({ 
+        user_id: userId, 
+        message: userMessage, 
+        role: 'user',
+        chat_id: chatId // <--- ESTO ES LO QUE FALTA
+      });
 
     if (userError) throw new Error("Error guardando en Supabase (user): " + userError.message);
 
-    // 2. Obtener la respuesta de Clarence (pasando el historial y userId)
     const result = await getClarenceResponse(messages, userId);
     
-    // Verificamos si Groq respondió correctamente
     if (!result.choices || result.choices.length === 0) {
       throw new Error("Respuesta inválida desde el modelo de IA.");
     }
 
     const aiMessage = result.choices[0].message.content;
 
-    // 3. Guardar la respuesta de la IA en Supabase
+    // 3. AÑADE 'chat_id: chatId' en la inserción de la respuesta de la IA
     const { error: aiError } = await supabase
       .from('chat_memory')
-      .insert({ user_id: userId, message: aiMessage, role: 'assistant' });
+      .insert({ 
+        user_id: userId, 
+        message: aiMessage, 
+        role: 'assistant',
+        chat_id: chatId // <--- ESTO ES LO QUE FALTA
+      });
 
     if (aiError) throw new Error("Error guardando en Supabase (ai): " + aiError.message);
 
-    // 4. Devolver la respuesta al frontend
     return res.status(200).json({ content: aiMessage });
 
   } catch (error) {
