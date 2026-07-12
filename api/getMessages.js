@@ -3,11 +3,10 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY
 
 export default async function handler(req, res) {
   const { chatId } = req.query;
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from('chat_memory')
-    .select('*')
+    .select('role, message')
     .eq('chat_id', chatId)
     .order('created_at', { ascending: true });
-
-  res.status(200).json(data);
+  res.status(200).json(data || []);
 }
