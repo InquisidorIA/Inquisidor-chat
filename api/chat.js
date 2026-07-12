@@ -24,10 +24,9 @@ export default async function handler(req, res) {
     const history = dbData.map(item => ({ role: item.role, content: item.message }));
 
     // 3. Respuesta IA
-    // Pasamos el historial completo para que la IA tenga contexto, tal como definimos en clarence.js
-    const result = await getClarenceResponse(history, userId);
+    // Pasamos chatId para que la función sepa qué historial consultar
+    const result = await getClarenceResponse(history, userId, chatId);
     
-    // Verificación de seguridad básica por si la API falla
     if (!result.choices || result.choices.length === 0) throw new Error("Respuesta vacía de la IA");
     
     const aiMessage = result.choices[0].message.content;
