@@ -1,83 +1,76 @@
 <!DOCTYPE html>
-<html lang="es" class="h-full">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Clarence | Terminal</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        * { box-sizing: border-box; }
-        body { 
-            background-color: #000; 
-            margin: 0; 
-            height: 100vh; 
-            display: flex; 
-            color: white;
-            overflow: hidden;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #000; color: #fff; font-family: sans-serif; height: 100vh; display: flex; overflow: hidden; }
+
+        /* Barra Desplegable (Nube) */
+        #sidebar {
+            position: fixed; left: -300px; top: 0; width: 280px; height: 100%;
+            background: rgba(20, 20, 20, 0.95);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid #333;
+            transition: left 0.3s ease;
+            z-index: 100;
+            padding: 20px;
         }
-        /* La "Nube" de la barra */
-        .glass-cloud {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
+        #sidebar.open { left: 0; }
+
+        /* Pantalla */
+        #main { flex: 1; display: flex; flex-direction: column; width: 100%; }
+        header { padding: 15px; border-bottom: 1px solid #333; display: flex; gap: 15px; align-items: center; }
+        #chat { flex: 1; overflow-y: auto; padding: 20px; }
+        #input-area { padding: 20px; border-top: 1px solid #333; display: flex; gap: 10px; }
+        
+        input { flex: 1; padding: 12px; background: #111; border: 1px solid #444; border-radius: 8px; color: #fff; }
+        button { padding: 10px 15px; background: #6b21a8; border: none; border-radius: 8px; color: white; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <!-- Barra lateral (Visible siempre) -->
-    <aside class="w-64 glass-cloud p-4 flex flex-col shrink-0">
-        <h2 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Memoria</h2>
-        <div id="history-list" class="flex-1 overflow-y-auto space-y-2">
-            <div class="p-3 bg-white/5 rounded-xl text-sm">Conversación Actual</div>
-        </div>
-        <button class="mt-4 w-full py-2 bg-purple-600/20 rounded-lg text-sm border border-purple-500/50">+ Nueva</button>
+    <aside id="sidebar">
+        <h2 style="margin-bottom: 20px; color: #888;">MEMORIA</h2>
+        <div id="history">Cargando...</div>
+        <button style="margin-top: 20px; width: 100%;">+ Nueva Charla</button>
     </aside>
 
-    <!-- Área de chat -->
-    <main class="flex-1 flex flex-col min-w-0">
-        <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4">
-            <div id="messages-list" class="max-w-xl mx-auto space-y-4"></div>
-        </div>
-        
-        <div class="p-4 border-t border-gray-800">
-            <div class="max-w-xl mx-auto flex gap-2">
-                <input id="input" class="flex-1 bg-gray-900 p-3 rounded-lg outline-none text-white" placeholder="Mensaje...">
-                <button id="send-btn" class="px-5 bg-purple-700 rounded-lg">Enviar</button>
-            </div>
+    <main id="main">
+        <header>
+            <button id="toggle-btn">☰</button>
+            <span>Clarence</span>
+        </header>
+        <div id="chat"><div id="messages"></div></div>
+        <div id="input-area">
+            <input id="input" type="text" placeholder="Habla con tu jefe...">
+            <button id="send-btn">Enviar</button>
         </div>
     </main>
 
     <script>
-        const mensajes = [{ role: 'assistant', content: "Aquí estoy." }];
-        
-        async function enviar() {
-            const input = document.getElementById('input');
-            if (!input.value.trim()) return;
-            mensajes.push({ role: 'user', content: input.value });
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('toggle-btn');
+        const input = document.getElementById('input');
+        const sendBtn = document.getElementById('send-btn');
+        const messages = document.getElementById('messages');
+
+        // Toggle Sidebar
+        toggleBtn.onclick = () => sidebar.classList.toggle('open');
+
+        // Lógica envío
+        function enviar() {
+            if(!input.value.trim()) return;
+            messages.innerHTML += `<div style="padding: 10px; background: #222; margin-bottom: 10px; border-radius: 8px;">${input.value}</div>`;
             input.value = '';
-            renderChat();
+            // Auto scroll
+            document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
         }
 
-        function renderChat() {
-            const list = document.getElementById('messages-list');
-            list.innerHTML = mensajes.map(m => `
-                <div class="p-3 rounded-xl ${m.role === 'user' ? 'bg-gray-800 ml-auto' : 'bg-gray-900'} max-w-[90%]">
-                    ${m.content}
-                </div>
-            `).join('');
-        }
-
-        // Eventos forzados
-        document.getElementById('send-btn').addEventListener('click', enviar);
-        document.getElementById('input').addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                enviar();
-            }
-        });
-
-        renderChat();
+        sendBtn.onclick = enviar;
+        input.onkeydown = (e) => { if(e.key === 'Enter') enviar(); };
     </script>
 </body>
 </html>
