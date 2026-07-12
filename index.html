@@ -8,31 +8,31 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #000; color: #fff; font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden; }
 
-        /* Fondo y Luces */
+        /* Fondo */
         #bg-effect {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(to top, rgba(75, 0, 130, 0.4) 0%, transparent 80%),
                         radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px);
             background-size: 100% 200%, 40px 40px;
             background-position: 0% 100%, 0 0;
-            opacity: 0; pointer-events: none; z-index: 0;
-            transition: opacity 0.3s ease;
+            opacity: 0; pointer-events: none; z-index: 0; transition: opacity 0.3s ease;
         }
 
-        /* Barra Lateral y Overlay */
+        /* Barra Lateral */
         #history-sidebar {
             position: fixed; top: 0; left: -300px; width: 280px; height: 100%;
-            background: #111; border-right: 1px solid #333;
-            z-index: 500; transition: left 0.3s ease; padding: 20px;
+            background: #111; border-right: 1px solid #333; z-index: 500;
+            transition: left 0.3s ease; padding: 20px; display: flex; flex-direction: column;
         }
         #history-sidebar.active { left: 0; }
-        #sidebar-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); z-index: 400; display: none;
-        }
+        #sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 400; display: none; }
         #sidebar-overlay.active { display: block; }
 
-        /* Animación de subida */
+        /* Botones de Barra */
+        .sidebar-btn { background: #222; color: #fff; border: 1px solid #444; padding: 10px; margin-bottom: 10px; border-radius: 8px; cursor: pointer; text-align: left; }
+        .sidebar-btn:hover { background: #333; }
+
+        /* Animación */
         @keyframes subirIluminacion {
             0% { opacity: 0; background-position: 0% 100%, 0 0; }
             30% { opacity: 1; }
@@ -42,19 +42,14 @@
         .animar-subida { animation: subirIluminacion 4s ease-out forwards; }
 
         /* Interfaz */
-        #menu-btn { 
-            position: absolute; top: 20px; left: 20px; z-index: 600;
-            background: transparent; border: 1px solid rgba(255,255,255,0.3);
-            border-radius: 50%; width: 50px; height: 50px; cursor: pointer;
-            font-size: 24px; color: white; display: flex; align-items: center; justify-content: center;
-        }
-
+        #menu-btn { position: absolute; top: 20px; left: 20px; z-index: 600; background: transparent; border: 1px solid rgba(255,255,255,0.3); border-radius: 50%; width: 50px; height: 50px; cursor: pointer; font-size: 24px; color: white; display: flex; align-items: center; justify-content: center; }
         #chat-container { width: 100%; height: 100%; display: flex; flex-direction: column; padding: 80px 20px 20px; z-index: 1; position: relative; }
         #messages { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
         .clarence-msg { align-self: flex-start; padding: 15px 20px; border-radius: 20px; background: linear-gradient(135deg, #4527a0, #000); border: 1px solid #673ab7; max-width: 80%; }
         .user-msg { align-self: flex-end; padding: 15px 20px; border-radius: 20px; background: #222; max-width: 80%; }
         #input-zone { display: flex; gap: 10px; padding-bottom: 20px; }
         input { flex-grow: 1; background: #1a1a1a; border: 1px solid #333; padding: 15px; border-radius: 15px; color: white; outline: none; }
+        #send-btn { background: #311b92; border: none; padding: 0 25px; border-radius: 15px; color: white; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -62,8 +57,11 @@
     <div id="sidebar-overlay" onclick="toggleMenu()"></div>
 
     <div id="history-sidebar">
-        <h3 style="margin-bottom: 20px;">Historial</h3>
-        <p style="color: #666;">No hay conversaciones guardadas.</p>
+        <button class="sidebar-btn" onclick="startNewChat()">+ Nueva Conversación</button>
+        <h3 style="margin: 20px 0;">Historial</h3>
+        <div id="history-list">
+            <p style="color: #666;">Cargando historial...</p>
+        </div>
     </div>
 
     <button id="menu-btn" onclick="toggleMenu()">◡</button>
@@ -72,6 +70,7 @@
         <div id="messages"><p class="clarence-msg">Hola, soy Clarence. ¿En qué te puedo ayudar hoy?</p></div>
         <div id="input-zone">
             <input type="text" id="user-input" placeholder="Escribe tu mensaje..." onkeydown="if(event.key==='Enter') sendMessage()">
+            <button id="send-btn" onclick="sendMessage()">Enviar</button>
         </div>
     </div>
 
@@ -81,11 +80,9 @@
             document.getElementById('sidebar-overlay').classList.toggle('active');
         }
 
-        function triggerProgressiveLight() {
-            const bg = document.getElementById('bg-effect');
-            bg.classList.remove('animar-subida');
-            void bg.offsetWidth; 
-            bg.classList.add('animar-subida');
+        function startNewChat() {
+            document.getElementById('messages').innerHTML = '<p class="clarence-msg">Nueva conversación iniciada.</p>';
+            toggleMenu();
         }
 
         async function sendMessage() {
@@ -97,7 +94,11 @@
             chat.innerHTML += `<p class="user-msg">${msg}</p>`;
             input.value = "";
 
-            triggerProgressiveLight();
+            // Efecto luces
+            const bg = document.getElementById('bg-effect');
+            bg.classList.remove('animar-subida');
+            void bg.offsetWidth; 
+            bg.classList.add('animar-subida');
 
             try {
                 const res = await fetch('/api/chat', {
@@ -112,6 +113,16 @@
             }
             chat.scrollTop = chat.scrollHeight;
         }
+
+        // Lógica para cargar historial (debes implementar el endpoint /api/history)
+        fetch('/api/history?userId=nacho')
+            .then(res => res.json())
+            .then(data => {
+                const list = document.getElementById('history-list');
+                list.innerHTML = data.map(item => `<button class="sidebar-btn">${item.title}</button>`).join('');
+            }).catch(() => {
+                document.getElementById('history-list').innerHTML = '<p style="color: #666;">No hay historial guardado.</p>';
+            });
     </script>
 </body>
 </html>
