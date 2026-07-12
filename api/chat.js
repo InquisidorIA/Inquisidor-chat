@@ -8,8 +8,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Método no permitido' });
   }
 
-  // 1. AÑADE 'chatId' aquí para recibirlo desde el frontend
-  const { messages, userId, chatId } = req.body; 
+  // Recibimos chatId y title desde el frontend
+  const { messages, userId, chatId, title } = req.body; 
   
   if (!messages || messages.length === 0 || !chatId) {
     return res.status(400).json({ content: "Faltan datos de la conversación." });
@@ -18,18 +18,20 @@ export default async function handler(req, res) {
   const userMessage = messages[messages.length - 1].content;
 
   try {
-    // 2. AÑADE 'chat_id: chatId' en la inserción del mensaje del usuario
+    // 1. Guardar mensaje del usuario con chat_id y title
     const { error: userError } = await supabase
       .from('chat_memory')
       .insert({ 
         user_id: userId, 
         message: userMessage, 
         role: 'user',
-        chat_id: chatId // <--- ESTO ES LO QUE FALTA
+        chat_id: chatId,
+        title: title || 'Nueva Charla' // Si no viene título, pone 'Nueva Charla'
       });
 
     if (userError) throw new Error("Error guardando en Supabase (user): " + userError.message);
 
+    // 2. Obtener la respuesta de Clarence
     const result = await getClarenceResponse(messages, userId);
     
     if (!result.choices || result.choices.length === 0) {
@@ -38,14 +40,15 @@ export default async function handler(req, res) {
 
     const aiMessage = result.choices[0].message.content;
 
-    // 3. AÑADE 'chat_id: chatId' en la inserción de la respuesta de la IA
+    // 3. Guardar la respuesta de la IA con chat_id y title
     const { error: aiError } = await supabase
       .from('chat_memory')
       .insert({ 
         user_id: userId, 
         message: aiMessage, 
         role: 'assistant',
-        chat_id: chatId // <--- ESTO ES LO QUE FALTA
+        chat_id: chatId,
+        title: title || 'Nueva Charla'
       });
 
     if (aiError) throw new Error("Error guardando en Supabase (ai): " + aiError.message);
