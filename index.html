@@ -57,7 +57,7 @@
     <button id="menu-btn" onclick="toggleMenu()">◡</button>
 
     <div id="chat-container">
-        <div id="messages"><p class="clarence-msg">Hola, soy Clarence.</p></div>
+        <div id="messages"><p class="clarence-msg">Hola, soy Clarence. ¿En qué te puedo ayudar hoy?</p></div>
         <div id="input-zone">
             <input type="text" id="user-input" placeholder="Escribe tu mensaje..." onkeydown="if(event.key==='Enter') sendMessage()">
             <button id="send-btn" onclick="sendMessage()">Enviar</button>
@@ -83,12 +83,10 @@
             const msg = input.value;
             if(msg.trim() === "") return;
 
-            // Mostrar mensaje
             const chat = document.getElementById('messages');
             chat.innerHTML += `<p class="user-msg">${msg}</p>`;
             input.value = "";
 
-            // Efecto luces
             const bg = document.getElementById('bg-effect');
             bg.classList.remove('animar-subida');
             void bg.offsetWidth; 
@@ -100,7 +98,8 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         userId: 'user_123', 
-                        chatId: currentChatId, 
+                        chatId: currentChatId,
+                        title: msg.substring(0, 20),
                         messages: [{ role: 'user', content: msg }] 
                     })
                 });
@@ -112,7 +111,6 @@
             }
         }
 
-        // Cargar historial
         fetch('/api/history?userId=user_123')
             .then(res => res.json())
             .then(chats => {
@@ -121,6 +119,13 @@
                     `<button class="sidebar-btn" onclick="loadChat('${chat.chat_id}')">${chat.title}</button>`
                 ).join('');
             });
+
+        function loadChat(chatId) {
+            currentChatId = chatId;
+            // Aquí puedes añadir la lógica para cargar los mensajes previos si quieres
+            alert("Cargando chat: " + chatId);
+            toggleMenu();
+        }
     </script>
 </body>
 </html>
