@@ -5,82 +5,70 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Clarence</title>
     <style>
-        /* Eliminamos cualquier herencia de estilo del navegador */
+        /* RESET ABSOLUTO */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body, html { width: 100%; height: 100%; overflow: hidden; background: #000; color: #fff; font-family: sans-serif; }
+        html, body { width: 100%; height: 100%; overflow: hidden; background: #000; color: #fff; font-family: sans-serif; }
 
-        /* Contenedor padre con Grid */
-        #app {
-            display: grid;
-            grid-template-columns: 280px 1fr;
-            grid-template-rows: 100vh;
-            width: 100vw;
-            height: 100vh;
-            position: relative;
+        /* CONTENEDOR PRINCIPAL */
+        #app { width: 100vw; height: 100vh; position: relative; }
+
+        /* BARRA LATERAL (EL MENÚ) */
+        #sidebar { 
+            position: absolute; top: 0; left: -280px; width: 280px; height: 100%; 
+            background: rgba(20, 20, 20, 0.95); backdrop-filter: blur(20px); 
+            border-right: 1px solid #444; z-index: 1000; transition: left 0.3s ease;
+            display: flex; flex-direction: column; padding: 20px;
         }
+        #sidebar.activo { left: 0; }
 
-        /* Barra Lateral con efecto Nube */
-        #sidebar {
-            background: rgba(20, 20, 20, 0.85);
-            backdrop-filter: blur(20px);
-            border-right: 1px solid #444;
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
-            transition: transform 0.3s ease;
-        }
+        /* CHAT Y CAPA DE EFECTO */
+        #main-chat { width: 100%; height: 100%; display: flex; flex-direction: column; transition: filter 0.3s; }
+        #main-chat.blur { filter: blur(8px); pointer-events: none; }
 
-        /* En móvil: Ocultamos la barra lateral fuera de pantalla */
-        @media (max-width: 768px) {
-            #app { grid-template-columns: 1fr; }
-            #sidebar {
-                position: absolute;
-                top: 0; left: 0;
-                width: 280px; height: 100%;
-                transform: translateX(-100%);
-            }
-            #sidebar.open { transform: translateX(0); }
-        }
-
-        /* Área de Chat */
-        #main-chat { display: flex; flex-direction: column; height: 100%; width: 100%; }
-        #chat-window { flex-grow: 1; overflow-y: auto; padding: 20px; }
-        #input-area { padding: 20px; border-top: 1px solid #333; }
-        input { width: 100%; padding: 12px; background: #111; border: 1px solid #444; color: white; border-radius: 8px; }
+        /* INPUT FIJO */
+        #input-zone { padding: 20px; border-top: 1px solid #333; background: #000; }
+        input { width: 100%; padding: 12px; background: #111; border: 1px solid #444; color: #fff; border-radius: 8px; }
+        button { padding: 10px; background: #6b21a8; border: none; color: white; border-radius: 8px; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div id="app">
-        <!-- BARRA LATERAL -->
+        <!-- BARRA LATERAL (HISTORIAL) -->
         <aside id="sidebar">
             <h2 style="margin-bottom: 20px; font-size: 14px; color: #888;">MEMORIA</h2>
-            <div id="history">
-                <div style="background: #222; padding: 10px; border-radius: 8px; margin-bottom: 10px;">Conversación 1 ✏️📌🗑️</div>
+            <div id="history-list" style="flex-grow: 1;">
+                <div style="padding: 10px; background: #333; border-radius: 8px; margin-bottom: 5px;">
+                    Conversación 1 ✏️📌🗑️
+                </div>
             </div>
-            <button style="margin-top: auto; padding: 10px; background: #6b21a8; border: none; color: white; border-radius: 8px;">+ Nueva Conversación</button>
+            <button>+ Nueva Conversación</button>
+            <button onclick="cerrarMenu()" style="margin-top: 10px; background: #444;">Cerrar</button>
         </aside>
 
-        <!-- ÁREA DE CHAT -->
+        <!-- CHAT -->
         <main id="main-chat">
-            <button id="menu-btn" style="width: 50px; height: 50px; background: none; border: none; color: white; font-size: 24px;">☰</button>
-            <div id="chat-window">
-                <p>Aquí irá tu chat.</p>
+            <header style="padding: 15px;">
+                <button onclick="abrirMenu()">☰ Menú</button>
+            </header>
+            <div id="chat-window" style="flex-grow: 1; padding: 20px;">
+                <p>Chat activo.</p>
             </div>
-            <div id="input-area">
+            <div id="input-zone">
                 <input type="text" placeholder="Habla con tu jefe...">
             </div>
         </main>
     </div>
 
     <script>
-        const menuBtn = document.getElementById('menu-btn');
-        const sidebar = document.getElementById('sidebar');
-
-        // Lógica de apertura
-        menuBtn.onclick = () => {
-            sidebar.classList.toggle('open');
-        };
+        function abrirMenu() {
+            document.getElementById('sidebar').classList.add('activo');
+            document.getElementById('main-chat').classList.add('blur');
+        }
+        function cerrarMenu() {
+            document.getElementById('sidebar').classList.remove('activo');
+            document.getElementById('main-chat').classList.remove('blur');
+        }
     </script>
 </body>
 </html>
