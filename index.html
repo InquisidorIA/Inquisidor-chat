@@ -30,7 +30,7 @@
         #history-sidebar.active { left: 0; }
         #sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 400; display: none; }
         #sidebar-overlay.active { display: block; }
-        .sidebar-btn { background: #222; color: #fff; border: 1px solid #444; padding: 12px; margin-bottom: 10px; border-radius: 8px; cursor: pointer; text-align: left; }
+        .sidebar-btn { background: #222; color: #fff; border: 1px solid #444; padding: 12px; margin-bottom: 10px; border-radius: 8px; cursor: pointer; text-align: left; width: 100%; }
         .sidebar-btn:hover { background: #333; }
 
         /* Interfaz */
@@ -87,6 +87,7 @@
             chat.innerHTML += `<p class="user-msg">${msg}</p>`;
             input.value = "";
 
+            // Efecto
             const bg = document.getElementById('bg-effect');
             bg.classList.remove('animar-subida');
             void bg.offsetWidth; 
@@ -111,6 +112,7 @@
             }
         }
 
+        // Cargar historial al iniciar
         fetch('/api/history?userId=user_123')
             .then(res => res.json())
             .then(chats => {
@@ -120,10 +122,22 @@
                 ).join('');
             });
 
-        function loadChat(chatId) {
+        // Cargar mensajes de un chat específico
+        async function loadChat(chatId) {
             currentChatId = chatId;
-            // Aquí puedes añadir la lógica para cargar los mensajes previos si quieres
-            alert("Cargando chat: " + chatId);
+            const chat = document.getElementById('messages');
+            chat.innerHTML = '<p class="clarence-msg">Cargando conversación...</p>';
+            
+            try {
+                const res = await fetch(`/api/getMessages?chatId=${chatId}`);
+                const data = await res.json();
+                chat.innerHTML = data.map(m => 
+                    `<p class="${m.role === 'user' ? 'user-msg' : 'clarence-msg'}">${m.message}</p>`
+                ).join('');
+                chat.scrollTop = chat.scrollHeight;
+            } catch (e) {
+                chat.innerHTML = '<p class="clarence-msg">Error al cargar historial.</p>';
+            }
             toggleMenu();
         }
     </script>
