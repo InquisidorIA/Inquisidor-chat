@@ -8,24 +8,29 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #000; color: #fff; font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden; }
 
-        /* Fondo y Luces */
+        /* Fondo: Puntos sutiles y morado oscuro */
         #bg-effect {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: radial-gradient(circle at center, #2e003e 0%, #000 70%);
-            background-image: radial-gradient(white 1px, transparent 1px);
+            background-image: radial-gradient(rgba(255,255,255,0.2) 1px, transparent 1px);
             background-size: 50px 50px;
-            opacity: 0; transition: opacity 0.5s ease; pointer-events: none; z-index: 0;
+            opacity: 0; 
+            pointer-events: none; 
+            z-index: 0;
         }
 
-        /* Animación de respiración */
-        @keyframes respirar {
-            0% { opacity: 0.3; }
-            50% { opacity: 0.8; }
-            100% { opacity: 0.3; }
+        /* Animación: Aparece, brilla suave y desaparece sola */
+        @keyframes respirarSuave {
+            0% { opacity: 0; }
+            30% { opacity: 0.8; }
+            70% { opacity: 0.4; }
+            100% { opacity: 0; }
         }
-        .pulsando { animation: respirar 2s infinite ease-in-out; }
 
-        /* Menú Sonrisa */
+        .animar-respiracion {
+            animation: respirarSuave 3s ease-in-out forwards;
+        }
+
         #menu-btn { 
             position: absolute; top: 20px; left: 20px; z-index: 100;
             background: transparent; border: 1px solid rgba(255,255,255,0.3);
@@ -33,20 +38,12 @@
             font-size: 24px; color: white; display: flex; align-items: center; justify-content: center;
         }
 
-        /* Chat y Burbujas */
         #chat-container { width: 100%; height: 100%; display: flex; flex-direction: column; padding: 80px 20px 20px; z-index: 1; position: relative; }
         #messages { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
         
-        .clarence-msg { 
-            align-self: flex-start; padding: 15px 20px; border-radius: 20px; 
-            background: linear-gradient(135deg, #4527a0, #000); 
-            color: #fff; max-width: 80%; border: 1px solid #673ab7; 
-        }
-        .user-msg { 
-            align-self: flex-end; padding: 15px 20px; border-radius: 20px; 
-            background: #222; color: #fff; max-width: 80%; 
-        }
-
+        .clarence-msg { align-self: flex-start; padding: 15px 20px; border-radius: 20px; background: linear-gradient(135deg, #4527a0, #000); color: #fff; max-width: 80%; border: 1px solid #673ab7; }
+        .user-msg { align-self: flex-end; padding: 15px 20px; border-radius: 20px; background: #222; color: #fff; max-width: 80%; }
+        
         #input-zone { display: flex; gap: 10px; padding-bottom: 20px; }
         input { flex-grow: 1; background: #1a1a1a; border: 1px solid #333; padding: 15px; border-radius: 15px; color: white; outline: none; }
         #send-btn { background: #311b92; border: none; padding: 15px 25px; border-radius: 15px; color: white; cursor: pointer; }
@@ -67,8 +64,8 @@
     <script>
         function toggleMenu() {
             const bg = document.getElementById('bg-effect');
+            // Manual: si presionas la sonrisa, se enciende/apaga
             bg.style.opacity = (bg.style.opacity === '1') ? '0' : '1';
-            bg.classList.remove('pulsando');
         }
 
         async function sendMessage() {
@@ -79,10 +76,12 @@
             const bg = document.getElementById('bg-effect');
             const chat = document.getElementById('messages');
 
-            // Iniciar iluminación y animación de "respirar"
-            bg.style.opacity = '1';
-            bg.classList.add('pulsando');
+            // 1. Disparar la animación de respiración automática
+            bg.classList.remove('animar-respiracion');
+            void bg.offsetWidth; // Reinicio de animación
+            bg.classList.add('animar-respiracion');
 
+            // 2. Mostrar mensaje de usuario
             chat.innerHTML += `<p class="user-msg">${msg}</p>`;
             input.value = "";
 
@@ -92,6 +91,7 @@
             chat.appendChild(loader);
             chat.scrollTop = chat.scrollHeight;
 
+            // 3. Comunicación con el backend
             try {
                 const res = await fetch('/api/chat', {
                     method: 'POST',
@@ -102,12 +102,9 @@
                     })
                 });
                 const data = await res.json();
-                loader.innerText = data.content || "Sin respuesta.";
+                loader.innerText = data.content || "Error en respuesta.";
             } catch (e) {
                 loader.innerText = "Error de conexión con el backend.";
-            } finally {
-                // Detener la animación al terminar
-                bg.classList.remove('pulsando');
             }
             chat.scrollTop = chat.scrollHeight;
         }
