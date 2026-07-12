@@ -46,48 +46,61 @@
 </head>
 <body>
     <div id="bg-effect"></div>
-    <div id="sidebar-overlay" onclick="toggleMenu()"></div>
+    <div id="sidebar-overlay"></div>
 
     <div id="history-sidebar">
-        <button class="sidebar-btn" onclick="startNewChat()">+ Nueva Conversación</button>
+        <button id="new-chat-btn" class="sidebar-btn">+ Nueva Conversación</button>
         <h3 style="margin: 20px 0;">Historial</h3>
         <div id="history-list"></div>
     </div>
 
-    <button id="menu-btn" onclick="toggleMenu()">◡</button>
+    <button id="menu-btn">◡</button>
 
     <div id="chat-container">
         <div id="messages"><p class="clarence-msg">Hola, soy Clarence. ¿En qué te puedo ayudar hoy?</p></div>
         <div id="input-zone">
-            <input type="text" id="user-input" placeholder="Escribe tu mensaje..." onkeydown="if(event.key==='Enter') sendMessage()">
-            <button id="send-btn" onclick="sendMessage()">Enviar</button>
+            <input type="text" id="user-input" placeholder="Escribe tu mensaje...">
+            <button id="send-btn">Enviar</button>
         </div>
     </div>
 
     <script>
         let currentChatId = 'chat_' + Date.now();
 
+        // Elementos
+        const sidebar = document.getElementById('history-sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        const menuBtn = document.getElementById('menu-btn');
+        const sendBtn = document.getElementById('send-btn');
+        const userInput = document.getElementById('user-input');
+        const newChatBtn = document.getElementById('new-chat-btn');
+
+        // Funciones de navegación
         function toggleMenu() {
-            document.getElementById('history-sidebar').classList.toggle('active');
-            document.getElementById('sidebar-overlay').classList.toggle('active');
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
         }
 
-        function startNewChat() {
+        menuBtn.addEventListener('click', toggleMenu);
+        overlay.addEventListener('click', toggleMenu);
+
+        newChatBtn.addEventListener('click', () => {
             currentChatId = 'chat_' + Date.now();
             document.getElementById('messages').innerHTML = '<p class="clarence-msg">Nueva conversación iniciada.</p>';
             toggleMenu();
-        }
+        });
 
         async function sendMessage() {
-            const input = document.getElementById('user-input');
-            const msg = input.value;
+            const msg = userInput.value;
             if(msg.trim() === "") return;
 
             const chat = document.getElementById('messages');
-            chat.innerHTML += `<p class="user-msg">${msg}</p>`;
-            input.value = "";
+            const userP = document.createElement('p');
+            userP.className = 'user-msg';
+            userP.innerText = msg;
+            chat.appendChild(userP);
+            userInput.value = "";
 
-            // Efecto visual
             const bg = document.getElementById('bg-effect');
             bg.classList.remove('animar-subida');
             void bg.offsetWidth; 
@@ -105,35 +118,47 @@
                     })
                 });
                 const data = await res.json();
-                chat.innerHTML += `<p class="clarence-msg">${data.content}</p>`;
+                const aiP = document.createElement('p');
+                aiP.className = 'clarence-msg';
+                aiP.innerText = data.content;
+                chat.appendChild(aiP);
                 chat.scrollTop = chat.scrollHeight;
             } catch (e) {
                 chat.innerHTML += `<p class="clarence-msg">Error de conexión.</p>`;
             }
         }
 
+        sendBtn.addEventListener('click', sendMessage);
+        userInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') sendMessage(); });
+
         // Cargar historial
         fetch('/api/history?userId=user_123')
             .then(res => res.json())
             .then(chats => {
                 const list = document.getElementById('history-list');
-                list.innerHTML = chats.map(chat => 
-                    `<button class="sidebar-btn" onclick="loadChat('${chat.chat_id}')">${chat.title}</button>`
-                ).join('');
+                chats.forEach(chat => {
+                    const btn = document.createElement('button');
+                    btn.className = 'sidebar-btn';
+                    btn.innerText = chat.title;
+                    btn.addEventListener('click', () => loadChat(chat.chat_id));
+                    list.appendChild(btn);
+                });
             });
 
-        // Cargar chat antiguo
         async function loadChat(chatId) {
             currentChatId = chatId;
             const chat = document.getElementById('messages');
-            chat.innerHTML = '<p class="clarence-msg">Recuperando conversación...</p>';
-            
+            chat.innerHTML = '<p class="clarence-msg">Cargando...</p>';
             try {
                 const res = await fetch(`/api/getMessages?chatId=${chatId}`);
                 const data = await res.json();
-                chat.innerHTML = data.map(m => 
-                    `<p class="${m.role === 'user' ? 'user-msg' : 'clarence-msg'}">${m.message}</p>`
-                ).join('');
+                chat.innerHTML = '';
+                data.forEach(m => {
+                    const p = document.createElement('p');
+                    p.className = m.role === 'user' ? 'user-msg' : 'clarence-msg';
+                    p.innerText = m.message;
+                    chat.appendChild(p);
+                });
                 chat.scrollTop = chat.scrollHeight;
             } catch (e) {
                 chat.innerHTML = '<p class="clarence-msg">Error al cargar.</p>';
