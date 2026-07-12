@@ -6,69 +6,70 @@
     <title>Clarence | Terminal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #000; height: 100vh; overflow: hidden; margin: 0; }
+        * { box-sizing: border-box; }
+        body { 
+            background-color: #000; 
+            margin: 0; 
+            height: 100vh; 
+            display: flex; 
+            color: white;
+            overflow: hidden;
+        }
+        /* La "Nube" de la barra */
         .glass-cloud {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            border-radius: 50px 20px 50px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
     </style>
 </head>
-<body class="flex h-screen text-zinc-200 font-sans">
+<body>
 
-    <!-- Barra Lateral (Nubes) - Oculta en móvil, visible en PC -->
-    <div class="hidden md:flex w-64 glass-cloud m-4 p-4 flex-col gap-4">
-        <h2 class="text-xs font-bold text-zinc-500 uppercase tracking-widest text-center">Memoria</h2>
-        <div id="history-list" class="flex-1 overflow-y-auto space-y-2"></div>
-        <button class="w-full py-2 bg-purple-900/30 rounded-xl hover:bg-purple-900/50">+ Nueva Conversación</button>
-    </div>
+    <!-- Barra lateral (Visible siempre) -->
+    <aside class="w-64 glass-cloud p-4 flex flex-col shrink-0">
+        <h2 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Memoria</h2>
+        <div id="history-list" class="flex-1 overflow-y-auto space-y-2">
+            <div class="p-3 bg-white/5 rounded-xl text-sm">Conversación Actual</div>
+        </div>
+        <button class="mt-4 w-full py-2 bg-purple-600/20 rounded-lg text-sm border border-purple-500/50">+ Nueva</button>
+    </aside>
 
-    <!-- Chat Area (Se ajusta solo) -->
-    <div class="flex-1 flex flex-col h-full relative">
+    <!-- Área de chat -->
+    <main class="flex-1 flex flex-col min-w-0">
         <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4">
-            <div class="max-w-2xl mx-auto space-y-4" id="messages-list"></div>
+            <div id="messages-list" class="max-w-xl mx-auto space-y-4"></div>
         </div>
         
-        <!-- Input siempre visible abajo -->
-        <div class="p-4 border-t border-zinc-800 bg-black">
-            <div class="max-w-2xl mx-auto flex gap-2">
-                <input id="input" 
-                    class="flex-1 bg-zinc-900 p-3 rounded-lg border border-zinc-700 outline-none focus:border-purple-500 text-white" 
-                    placeholder="Habla con tu jefe...">
-                <button id="send-btn" class="px-6 bg-purple-700 rounded-lg font-bold">Enviar</button>
+        <div class="p-4 border-t border-gray-800">
+            <div class="max-w-xl mx-auto flex gap-2">
+                <input id="input" class="flex-1 bg-gray-900 p-3 rounded-lg outline-none text-white" placeholder="Mensaje...">
+                <button id="send-btn" class="px-5 bg-purple-700 rounded-lg">Enviar</button>
             </div>
         </div>
-    </div>
+    </main>
 
     <script>
         const mensajes = [{ role: 'assistant', content: "Aquí estoy." }];
         
         async function enviar() {
             const input = document.getElementById('input');
-            const text = input.value.trim();
-            if (!text) return;
-            
-            mensajes.push({ role: 'user', content: text });
+            if (!input.value.trim()) return;
+            mensajes.push({ role: 'user', content: input.value });
             input.value = '';
             renderChat();
-
-            // Aquí va tu fetch al backend...
         }
 
         function renderChat() {
             const list = document.getElementById('messages-list');
             list.innerHTML = mensajes.map(m => `
-                <div class="flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}">
-                    <div class="p-3 rounded-xl max-w-[90%] ${m.role === 'user' ? 'bg-zinc-800' : 'bg-zinc-900'}">
-                        ${m.content}
-                    </div>
+                <div class="p-3 rounded-xl ${m.role === 'user' ? 'bg-gray-800 ml-auto' : 'bg-gray-900'} max-w-[90%]">
+                    ${m.content}
                 </div>
             `).join('');
-            document.getElementById('chat-container').scrollTop = document.getElementById('chat-container').scrollHeight;
         }
 
-        // TECLADO INFALIBLE:
+        // Eventos forzados
+        document.getElementById('send-btn').addEventListener('click', enviar);
         document.getElementById('input').addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -76,7 +77,6 @@
             }
         });
 
-        document.getElementById('send-btn').addEventListener('click', enviar);
         renderChat();
     </script>
 </body>
