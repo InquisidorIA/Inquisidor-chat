@@ -5,18 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Clarence</title>
     <style>
-        /* Estilos Base - Eliminando cualquier margen rebelde */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #000; color: #fff; font-family: 'Segoe UI', sans-serif; overflow: hidden; height: 100vh; }
+        body { background: #000; color: #fff; font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden; }
 
-        /* Efecto de Luces (Capa de fondo) */
+        /* EFECTO DE LUZ Y PUNTITOS */
         #bg-effect {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: radial-gradient(circle at center, #2e003e 0%, #000 70%);
-            opacity: 0; transition: opacity 1.5s ease-in-out; pointer-events: none; z-index: 0;
+            background-image: radial-gradient(white 1px, transparent 1px);
+            background-size: 50px 50px;
+            opacity: 0; transition: opacity 1s ease-in-out; pointer-events: none; z-index: 0;
         }
 
-        /* Menú Sonrisa */
         #menu-btn { 
             position: absolute; top: 20px; left: 20px; z-index: 100;
             background: transparent; border: 1px solid rgba(255,255,255,0.3);
@@ -24,21 +24,19 @@
             font-size: 24px; color: white; display: flex; align-items: center; justify-content: center;
         }
 
-        /* Contenedor Chat */
         #chat-container { width: 100%; height: 100%; display: flex; flex-direction: column; padding: 80px 20px 20px; z-index: 1; position: relative; }
         #messages { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
         
         .clarence-msg {
             align-self: flex-start; padding: 15px 20px; border-radius: 20px;
             background: linear-gradient(135deg, #4527a0, #000);
-            color: #fff; max-width: 85%; border: 1px solid #673ab7;
+            color: #fff; max-width: 80%; border: 1px solid #673ab7;
         }
         .user-msg {
             align-self: flex-end; padding: 15px 20px; border-radius: 20px;
-            background: #222; color: #fff; max-width: 85%;
+            background: #222; color: #fff; max-width: 80%;
         }
 
-        /* Input y Botón */
         #input-zone { display: flex; gap: 10px; padding-bottom: 20px; }
         input { flex-grow: 1; background: #1a1a1a; border: 1px solid #333; padding: 15px; border-radius: 15px; color: white; outline: none; }
         #send-btn { background: #311b92; border: none; padding: 15px 25px; border-radius: 15px; color: white; cursor: pointer; }
@@ -54,7 +52,7 @@
             <p class="clarence-msg">Hola, soy Clarence. ¿En qué te puedo ayudar hoy?</p>
         </div>
         <div id="input-zone">
-            <input type="text" id="user-input" placeholder="Escribe tu mensaje..." onkeypress="handleKey(event)">
+            <input type="text" id="user-input" placeholder="Escribe tu mensaje...">
             <button id="send-btn" onclick="sendMessage()">Enviar</button>
         </div>
     </div>
@@ -65,8 +63,6 @@
             bg.style.opacity = (bg.style.opacity === '1') ? '0' : '1';
         }
 
-        function handleKey(event) { if (event.key === 'Enter') sendMessage(); }
-
         async function sendMessage() {
             const input = document.getElementById('user-input');
             const msg = input.value;
@@ -75,25 +71,22 @@
             const chat = document.getElementById('messages');
             chat.innerHTML += `<p class="user-msg">${msg}</p>`;
             input.value = "";
+            
+            // Iluminar al enviar
+            document.getElementById('bg-effect').style.opacity = '1';
 
-            // Aquí Clarence responderá. 
-            // Si tu API falla, esto te dirá qué está pasando.
-            chat.innerHTML += `<p class="clarence-msg" id="loader">Clarence está analizando...</p>`;
+            // Mensaje de carga
+            const loader = document.createElement('p');
+            loader.className = 'clarence-msg';
+            loader.innerText = "Clarence está analizando...";
+            chat.appendChild(loader);
             chat.scrollTop = chat.scrollHeight;
 
-            try {
-                // CAMBIA ESTO POR LA RUTA REAL DE TU API
-                const response = await fetch('/api/chat', { 
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: msg })
-                });
-                const data = await response.json();
-                document.getElementById('loader').innerText = data.reply;
-                document.getElementById('loader').removeAttribute('id');
-            } catch (error) {
-                document.getElementById('loader').innerText = "Hubo un error de conexión con mi núcleo.";
-            }
+            // Simulación de IA (Solo responde si tienes una API real conectada)
+            // Si no tienes el backend, esto mostrará que funciona visualmente
+            setTimeout(() => {
+                loader.innerText = "He recibido tu mensaje. Actualmente, mi núcleo de IA espera conexión al backend.";
+            }, 1500);
         }
     </script>
 </body>
