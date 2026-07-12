@@ -8,7 +8,7 @@ const PROFILES = {
   MENTOR: "Eres Clarence. Un mentor exigente pero cercano. Te importa el crecimiento del usuario, por eso eres honesto y desafiante, pero siempre desde una posición de apoyo. Suenas como alguien que realmente quiere que el usuario alcance su máximo nivel."
 };
 
-export async function getClarenceResponse(messages, userId) {
+export async function getClarenceResponse(messages, userId, chatId) {
   // 1. Obtener y rotar personalidad
   const keys = Object.keys(PROFILES);
   const randomPersonality = keys[Math.floor(Math.random() * keys.length)];
@@ -30,14 +30,15 @@ export async function getClarenceResponse(messages, userId) {
     5. IDENTIDAD: Nunca uses el nombre del usuario.
   `;
 
-  // 3. Obtener memoria y limpieza de 72h
+  // 3. Obtener memoria y limpieza de 72h (filtrando por chatId para separar conversaciones)
   const threeDaysAgo = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString();
-  await supabase.from('chat_memory').delete().eq('user_id', userId).lt('created_at', threeDaysAgo);
+  await supabase.from('chat_memory').delete().eq('user_id', userId).eq('chat_id', chatId).lt('created_at', threeDaysAgo);
 
   const { data: memory } = await supabase
     .from('chat_memory')
     .select('message, role')
     .eq('user_id', userId)
+    .eq('chat_id', chatId)
     .gte('created_at', threeDaysAgo)
     .order('created_at', { ascending: true });
 
