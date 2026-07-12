@@ -8,7 +8,6 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #000; color: #fff; font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden; }
 
-        /* Fondo y Luces */
         #bg-effect {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(to top, rgba(75, 0, 130, 0.4) 0%, transparent 80%),
@@ -25,15 +24,14 @@
         }
         .animar-subida { animation: subirIluminacion 4s ease-out forwards; }
 
-        /* Barra Lateral */
         #history-sidebar { position: fixed; top: 0; left: -300px; width: 280px; height: 100%; background: #111; border-right: 1px solid #333; z-index: 500; transition: left 0.3s ease; padding: 20px; display: flex; flex-direction: column; }
         #history-sidebar.active { left: 0; }
         #sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 400; display: none; }
         #sidebar-overlay.active { display: block; }
         .sidebar-btn { background: #222; color: #fff; border: 1px solid #444; padding: 12px; margin-bottom: 10px; border-radius: 8px; cursor: pointer; text-align: left; width: 100%; }
         .sidebar-btn:hover { background: #333; }
+        .del-btn { padding: 10px; margin-bottom: 10px; background: #800; border-radius: 8px; border: none; cursor: pointer; color: white; }
 
-        /* Interfaz */
         #menu-btn { position: absolute; top: 20px; left: 20px; z-index: 600; background: transparent; border: 1px solid rgba(255,255,255,0.3); border-radius: 50%; width: 50px; height: 50px; cursor: pointer; font-size: 24px; color: white; display: flex; align-items: center; justify-content: center; }
         #chat-container { width: 100%; height: 100%; display: flex; flex-direction: column; padding: 80px 20px 20px; z-index: 1; position: relative; }
         #messages { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
@@ -67,7 +65,6 @@
     <script>
         let currentChatId = 'chat_' + Date.now();
 
-        // Elementos
         const sidebar = document.getElementById('history-sidebar');
         const overlay = document.getElementById('sidebar-overlay');
         const menuBtn = document.getElementById('menu-btn');
@@ -75,7 +72,6 @@
         const userInput = document.getElementById('user-input');
         const newChatBtn = document.getElementById('new-chat-btn');
 
-        // Funciones de navegación
         function toggleMenu() {
             sidebar.classList.toggle('active');
             overlay.classList.toggle('active');
@@ -89,6 +85,44 @@
             document.getElementById('messages').innerHTML = '<p class="clarence-msg">Nueva conversación iniciada.</p>';
             toggleMenu();
         });
+
+        async function deleteChat(chatId, event) {
+            event.stopPropagation();
+            if(!confirm("¿Borrar esta conversación?")) return;
+            try {
+                const res = await fetch(`/api/deleteChat?chatId=${chatId}`, { method: 'DELETE' });
+                if(res.ok) loadHistory();
+            } catch (e) { console.error(e); }
+        }
+
+        function loadHistory() {
+            fetch('/api/history?userId=user_123')
+                .then(res => res.json())
+                .then(chats => {
+                    const list = document.getElementById('history-list');
+                    list.innerHTML = '';
+                    chats.forEach(chat => {
+                        const container = document.createElement('div');
+                        container.style.display = 'flex';
+                        container.style.gap = '5px';
+                        
+                        const btn = document.createElement('button');
+                        btn.className = 'sidebar-btn';
+                        btn.style.flexGrow = '1';
+                        btn.innerText = chat.title;
+                        btn.addEventListener('click', () => loadChat(chat.chat_id));
+                        
+                        const delBtn = document.createElement('button');
+                        delBtn.innerText = '✕';
+                        delBtn.className = 'del-btn';
+                        delBtn.addEventListener('click', (e) => deleteChat(chat.chat_id, e));
+                        
+                        container.appendChild(btn);
+                        container.appendChild(delBtn);
+                        list.appendChild(container);
+                    });
+                });
+        }
 
         async function sendMessage() {
             const msg = userInput.value;
@@ -123,27 +157,11 @@
                 aiP.innerText = data.content;
                 chat.appendChild(aiP);
                 chat.scrollTop = chat.scrollHeight;
+                loadHistory(); 
             } catch (e) {
                 chat.innerHTML += `<p class="clarence-msg">Error de conexión.</p>`;
             }
         }
-
-        sendBtn.addEventListener('click', sendMessage);
-        userInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') sendMessage(); });
-
-        // Cargar historial
-        fetch('/api/history?userId=user_123')
-            .then(res => res.json())
-            .then(chats => {
-                const list = document.getElementById('history-list');
-                chats.forEach(chat => {
-                    const btn = document.createElement('button');
-                    btn.className = 'sidebar-btn';
-                    btn.innerText = chat.title;
-                    btn.addEventListener('click', () => loadChat(chat.chat_id));
-                    list.appendChild(btn);
-                });
-            });
 
         async function loadChat(chatId) {
             currentChatId = chatId;
@@ -165,6 +183,10 @@
             }
             toggleMenu();
         }
+
+        sendBtn.addEventListener('click', sendMessage);
+        userInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') sendMessage(); });
+        loadHistory();
     </script>
 </body>
 </html>
