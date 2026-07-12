@@ -87,7 +87,7 @@
             chat.innerHTML += `<p class="user-msg">${msg}</p>`;
             input.value = "";
 
-            // Efecto
+            // Efecto visual
             const bg = document.getElementById('bg-effect');
             bg.classList.remove('animar-subida');
             void bg.offsetWidth; 
@@ -112,7 +112,7 @@
             }
         }
 
-        // Cargar historial al iniciar
+        // Cargar historial
         fetch('/api/history?userId=user_123')
             .then(res => res.json())
             .then(chats => {
@@ -122,11 +122,11 @@
                 ).join('');
             });
 
-        // Cargar mensajes de un chat específico
+        // Cargar chat antiguo
         async function loadChat(chatId) {
             currentChatId = chatId;
             const chat = document.getElementById('messages');
-            chat.innerHTML = '<p class="clarence-msg">Cargando conversación...</p>';
+            chat.innerHTML = '<p class="clarence-msg">Recuperando conversación...</p>';
             
             try {
                 const res = await fetch(`/api/getMessages?chatId=${chatId}`);
@@ -136,7 +136,7 @@
                 ).join('');
                 chat.scrollTop = chat.scrollHeight;
             } catch (e) {
-                chat.innerHTML = '<p class="clarence-msg">Error al cargar historial.</p>';
+                chat.innerHTML = '<p class="clarence-msg">Error al cargar.</p>';
             }
             toggleMenu();
         }
