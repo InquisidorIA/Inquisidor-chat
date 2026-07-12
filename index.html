@@ -8,7 +8,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #000; color: #fff; font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden; }
 
-        /* Fondo */
+        /* Fondo y Luces */
         #bg-effect {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(to top, rgba(75, 0, 130, 0.4) 0%, transparent 80%),
@@ -19,15 +19,20 @@
             transition: opacity 0.3s ease;
         }
 
-        /* Barra Lateral de Historial */
+        /* Barra Lateral y Overlay */
         #history-sidebar {
             position: fixed; top: 0; left: -300px; width: 280px; height: 100%;
             background: #111; border-right: 1px solid #333;
-            z-index: 200; transition: left 0.3s ease; padding: 20px;
+            z-index: 500; transition: left 0.3s ease; padding: 20px;
         }
         #history-sidebar.active { left: 0; }
+        #sidebar-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 400; display: none;
+        }
+        #sidebar-overlay.active { display: block; }
 
-        /* Animaciones */
+        /* Animación de subida */
         @keyframes subirIluminacion {
             0% { opacity: 0; background-position: 0% 100%, 0 0; }
             30% { opacity: 1; }
@@ -36,9 +41,9 @@
         }
         .animar-subida { animation: subirIluminacion 4s ease-out forwards; }
 
-        /* Estilos UI */
+        /* Interfaz */
         #menu-btn { 
-            position: absolute; top: 20px; left: 20px; z-index: 300;
+            position: absolute; top: 20px; left: 20px; z-index: 600;
             background: transparent; border: 1px solid rgba(255,255,255,0.3);
             border-radius: 50%; width: 50px; height: 50px; cursor: pointer;
             font-size: 24px; color: white; display: flex; align-items: center; justify-content: center;
@@ -54,8 +59,8 @@
 </head>
 <body>
     <div id="bg-effect"></div>
-    
-    <!-- Barra Lateral -->
+    <div id="sidebar-overlay" onclick="toggleMenu()"></div>
+
     <div id="history-sidebar">
         <h3 style="margin-bottom: 20px;">Historial</h3>
         <p style="color: #666;">No hay conversaciones guardadas.</p>
@@ -71,12 +76,11 @@
     </div>
 
     <script>
-        // 1. Alternar barra lateral
         function toggleMenu() {
             document.getElementById('history-sidebar').classList.toggle('active');
+            document.getElementById('sidebar-overlay').classList.toggle('active');
         }
 
-        // 2. Disparar luces
         function triggerProgressiveLight() {
             const bg = document.getElementById('bg-effect');
             bg.classList.remove('animar-subida');
