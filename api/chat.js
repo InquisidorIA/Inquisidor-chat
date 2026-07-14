@@ -8,7 +8,7 @@ export default async function handler(req, res) {
   const { messages, userId, chatId, title } = req.body;
   if (!messages || !chatId) return res.status(400).json({ content: "Faltan datos." });
 
-  // Selección dinámica de tabla
+  // Selección dinámica de tabla (Si es público, usa public_chats)
   const table = chatId === 'public' ? 'public_chats' : 'chat_memory';
 
   try {
@@ -20,7 +20,7 @@ export default async function handler(req, res) {
     // 2. Traer historial
     const { data: dbData } = await supabase
       .from(table)
-      .select('role, message')
+      .select('role, message, created_at')
       .eq('chat_id', chatId)
       .order('created_at', { ascending: true });
 
